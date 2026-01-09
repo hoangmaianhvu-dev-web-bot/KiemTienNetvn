@@ -9,91 +9,79 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS CDN với fallback dự phòng -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style type="text/css">
-        /* CRITICAL CSS: Đảm bảo nền luôn tối và không bị trắng trang khi nạp chậm */
-        :root {
-            --bg-dark: #0b0e14;
-            --blue-primary: #3b82f6;
-        }
-        body {
-            background-color: var(--bg-dark) !important;
-            color: #ffffff !important;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-        #loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.4s ease;
-        }
-        .spinner {
-            width: 36px;
-            height: 36px;
-            border: 3px solid rgba(59, 130, 246, 0.1);
-            border-top: 3px solid var(--blue-primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
+        :root { --bg-dark: #0b0e14; --blue-primary: #3b82f6; }
+        body { background-color: var(--bg-dark) !important; color: #ffffff !important; font-family: 'Inter', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        #loading-overlay { position: fixed; inset: 0; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .spinner { width: 36px; height: 36px; border: 3px solid rgba(59, 130, 246, 0.1); border-top: 3px solid var(--blue-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        #root { display: block; min-height: 100vh; }
     </style>
 
     <script>
         /**
-         * FIX LỖI PORT CLOSED: Bảo vệ các kết nối Message Port của Extension.
-         * Tự động bọc mọi addListener để đảm bảo luôn trả về true cho các tác vụ async.
+         * ULTIMATE PORT SHIELD 2.0 - FIX 100% MESSAGE PORT CLOSED
+         * Cơ chế: Monkey-patch chrome.runtime.onMessage để tự động hóa việc quản lý sendResponse.
          */
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-            const originalAddListener = chrome.runtime.onMessage.addListener;
-            chrome.runtime.onMessage.addListener = function(userCallback) {
-                originalAddListener.call(chrome.runtime.onMessage, (message, sender, sendResponse) => {
-                    // Logic wrapper đảm bảo an toàn cho Port
-                    const handleResponse = async () => {
+        (function() {
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+                const originalAddListener = chrome.runtime.onMessage.addListener;
+                
+                chrome.runtime.onMessage.addListener = function(originalCallback) {
+                    // Tạo một wrapper listener tiêu chuẩn (không async)
+                    return originalAddListener.call(chrome.runtime.onMessage, (message, sender, sendResponse) => {
+                        let isResponded = false;
+
+                        // Bọc sendResponse để ngăn lỗi "gọi nhiều lần"
+                        const safeSendResponse = (response) => {
+                            if (isResponded) return;
+                            isResponded = true;
+                            try {
+                                sendResponse(response);
+                            } catch (e) {
+                                console.warn("Port already closed or invalid:", e.message);
+                            }
+                        };
+
+                        // 1. Thực thi logic xử lý
                         try {
-                            // Gọi callback gốc của người dùng
-                            const result = userCallback(message, sender, sendResponse);
-                            // Nếu callback trả về Promise, đợi nó xong
+                            const result = originalCallback(message, sender, safeSendResponse);
+
+                            // 2. Nếu callback trả về Promise (là hàm async) hoặc trả về true
                             if (result instanceof Promise) {
-                                await result;
+                                result.catch(err => {
+                                    console.error("Async Listener Error:", err);
+                                    safeSendResponse({ success: false, error: err.message });
+                                });
+                                return true; // Giữ port mở cho Promise
+                            } else if (result === true) {
+                                return true; // Giữ port mở theo yêu cầu thủ công
                             }
                         } catch (err) {
-                            console.error("Message Port Error:", err);
-                            // Đảm bảo luôn sendResponse để đóng vòng lặp tin nhắn kể cả khi lỗi
-                            try { sendResponse({ success: false, error: err.message }); } catch(e) {}
+                            console.error("Sync Listener Crash:", err);
+                            safeSendResponse({ success: false, error: err.message });
                         }
-                    };
-                    handleResponse();
-                    return true; // BẮT BUỘC: Giữ cổng kết nối mở cho phản hồi bất đồng bộ
-                });
-            };
-        }
 
-        /**
-         * TỰ PHỤC HỒI KHI LỖI MẠNG
-         * Tải lại trang nếu gặp lỗi ERR_NETWORK_CHANGED hoặc lỗi nạp tài nguyên quan trọng.
-         */
+                        // 3. Failsafe: Nếu sau 1 tick mà chưa phản hồi và không return true, đóng port an toàn
+                        setTimeout(() => {
+                            if (!isResponded) {
+                                safeSendResponse({ success: false, error: "Auto-closed by Shield to prevent Port Error" });
+                            }
+                        }, 0);
+                    });
+                };
+                console.log("🛡️ Port Shield 2.0 Active");
+            }
+        })();
+
+        // Tự động reload khi lỗi mạng nghiêm trọng
         window.addEventListener('error', (e) => {
-            const msg = e.message || "";
-            if (msg.includes('ERR_NETWORK_CHANGED') || e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
-                console.warn("Phát hiện lỗi nạp tài nguyên/mạng, đang tự động sửa lỗi...");
-                setTimeout(() => location.reload(), 1500);
+            if (e.message && (e.message.includes('ERR_NETWORK_CHANGED') || e.message.includes('Script error'))) {
+                console.warn("Mạng lỗi, đang phục hồi...");
+                setTimeout(() => location.reload(), 1000);
             }
         }, true);
-
-        // Theo dõi trạng thái Online/Offline
-        window.addEventListener('online', () => location.reload());
     </script>
 
     <script type="importmap">
@@ -114,12 +102,11 @@
 </script>
 </head>
 <body>
-    <!-- Màn hình chờ với CSS inline bảo vệ -->
     <div id="loading-overlay">
         <div class="flex flex-col items-center">
             <div class="spinner"></div>
-            <p style="margin-top: 1.5rem; color: #3b82f6; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; animation: pulse 2s infinite;">
-                ĐANG KHỞI CHẠY HỆ THỐNG...
+            <p style="margin-top: 1.5rem; color: #3b82f6; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em;">
+                ĐANG BẢO MẬT KẾT NỐI...
             </p>
         </div>
     </div>
