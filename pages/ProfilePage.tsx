@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabase';
-import { UserProfile } from '../types';
+import { supabase } from '../supabase.ts';
+import { UserProfile } from '../types.ts';
 
 interface ProfilePageProps {
   profile: UserProfile | null;
