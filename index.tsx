@@ -4,6 +4,7 @@ import App from './App.tsx';
 
 const initApp = () => {
   const rootElement = document.getElementById('root');
+  const loader = document.getElementById('loading-overlay');
 
   if (rootElement) {
     try {
@@ -13,19 +14,30 @@ const initApp = () => {
           <App />
         </React.StrictMode>
       );
+
+      // Ẩn màn hình chờ sau khi render bắt đầu
+      if (loader) {
+        setTimeout(() => {
+          loader.style.opacity = '0';
+          setTimeout(() => {
+            loader.style.visibility = 'hidden';
+            loader.remove();
+          }, 500);
+        }, 300);
+      }
     } catch (error) {
       console.error("React render error:", error);
-      rootElement.innerHTML = `<div style="color: white; padding: 20px; text-align: center;">
-        <h2>Lỗi khởi tạo hệ thống</h2>
-        <p>Vui lòng làm mới trang (F5). Nếu vẫn lỗi, hãy kiểm tra kết nối mạng.</p>
-      </div>`;
+      if (rootElement) {
+        rootElement.innerHTML = `<div style="color: white; padding: 20px; text-align: center; font-family: sans-serif;">
+          <h2 style="color: #ef4444;">Lỗi khởi tạo hệ thống</h2>
+          <p>Vui lòng làm mới trang (F5). Nếu vẫn lỗi, hãy kiểm tra kết nối mạng.</p>
+        </div>`;
+      }
     }
-  } else {
-    console.error("Root element not found.");
   }
 };
 
-// Đảm bảo DOM đã tải xong trước khi khởi chạy React
+// Khởi chạy khi tài nguyên đã sẵn sàng
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);
 } else {
