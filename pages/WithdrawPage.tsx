@@ -1,0 +1,171 @@
+
+import React, { useState, useEffect } from 'react';
+import { UserProfile, Withdrawal } from '../types';
+import { supabase } from '../supabase';
+
+interface WithdrawPageProps {
+  profile: UserProfile;
+}
+
+const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile }) => {
+  const [method, setMethod] = useState<'bank' | 'garena'>('bank');
+  const [amount, setAmount] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<Withdrawal[]>([]);
+
+  const isAdmin = profile.role === 'admin';
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const fetchHistory = async () => {
+    const { data } = await supabase
+      .from('withdrawals')
+      .select('*')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false });
+    if (data) setHistory(data);
+  };
+
+  const handleWithdraw = async () => {
+    const val = Number(amount);
+    if (!val || val < 10000) return alert('Số tiền tối thiểu là 10.000đ');
+    
+    // Check required fields based on method
+    if (method === 'bank' && (!bankName || !accountNumber)) {
+      return alert('Vui lòng nhập tên ngân hàng và số tài khoản');
+    }
+    if (method === 'garena' && !accountNumber) {
+      return alert('Vui lòng nhập ID Garena');
+    }
+
+    if (!isAdmin && val > profile.balance) return alert('Số dư không đủ');
+
+    setLoading(true);
+    try {
+      // 1. Create withdrawal record
+      const { error: withdrawError } = await supabase
+        .from('withdrawals')
+        .insert([{ 
+          user_id: profile.id, 
+          amount: val, 
+          method, 
+          status: isAdmin ? 'completed' : 'pending',
+          bank_name: method === 'bank' ? bankName : null,
+          account_number: accountNumber
+        }]);
+
+      if (withdrawError) throw withdrawError;
+
+      // 2. Deduct money (Admin is exempted to maintain infinite balance)
+      if (!isAdmin) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ balance: profile.balance - val })
+          .eq('id', profile.id);
+        if (profileError) throw profileError;
+      }
+
+      alert(isAdmin ? 'Admin rút tiền thành công (Hệ thống tự duyệt)!' : 'Gửi yêu cầu rút tiền thành công!');
+      setAmount('');
+      setBankName('');
+      setAccountNumber('');
+      fetchHistory();
+      if (!isAdmin) window.location.reload();
+    } catch (err: any) {
+      alert('Lỗi: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 rounded-[48px] p-12 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[100px] rounded-full translate-x-32 -translate-y-32"></div>
+            <p className="text-blue-200 text-[10px] font-black uppercase tracking-[0.2em] mb-4">SỐ DƯ KHẢ DỤNG</p>
+            <h2 className="text-6xl font-black text-white mb-10 tracking-tight">{isAdmin ? '∞ VÔ HẠN' : `${profile.balance?.toLocaleString()}đ`}</h2>
+            <div className="flex gap-4">
+               <div className="bg-white/10 px-4 py-2 rounded-xl text-[10px] font-black text-white uppercase tracking-widest border border-white/10">BẢO MẬT SSL</div>
+               <div className="bg-blue-400/20 px-4 py-2 rounded-xl text-[10px] font-black text-blue-100 uppercase tracking-widest border border-blue-400/20">QUẢN TRỊ VIÊN</div>
+            </div>
+          </div>
+
+          <div className="bg-[#151a24] rounded-[48px] p-12 border border-gray-800 shadow-xl">
+             <h3 className="text-2xl font-black text-white mb-10 flex items-center gap-3">
+                <span className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-xl">💳</span>
+                Rút tiền về tài khoản
+             </h3>
+             <div className="grid grid-cols-2 gap-6 mb-10">
+                <button onClick={() => setMethod('bank')} className={`p-8 rounded-3xl border-2 transition-all flex flex-col items-center gap-3 ${method === 'bank' ? 'border-blue-500 bg-blue-500/10 text-white' : 'border-gray-800 text-gray-500'}`}>
+                   <span className="text-3xl">🏛️</span>
+                   <span className="text-[10px] font-black uppercase tracking-widest">Ngân hàng</span>
+                </button>
+                <button onClick={() => setMethod('garena')} className={`p-8 rounded-3xl border-2 transition-all flex flex-col items-center gap-3 ${method === 'garena' ? 'border-red-500 bg-red-500/10 text-white' : 'border-gray-800 text-gray-500'}`}>
+                   <span className="text-3xl">🎮</span>
+                   <span className="text-[10px] font-black uppercase tracking-widest">Thẻ Garena</span>
+                </button>
+             </div>
+
+             <div className="space-y-6">
+                <div>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Số tiền muốn rút (VNĐ)</label>
+                  <div className="relative">
+                    <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Tối thiểu 10,000" className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white font-black text-2xl focus:border-blue-500 outline-none transition-all" />
+                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-600 font-bold">VNĐ</span>
+                  </div>
+                </div>
+
+                {method === 'bank' ? (
+                  <div className="grid md:grid-cols-2 gap-6 animate-in slide-in-from-bottom-2">
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Tên ngân hàng</label>
+                      <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="VD: MB Bank, VCB..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Số tài khoản</label>
+                      <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="0123456789..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="animate-in slide-in-from-bottom-2">
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">ID Garena / Số điện thoại</label>
+                    <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Nhập ID tài khoản game..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm" />
+                  </div>
+                )}
+             </div>
+
+             <button onClick={handleWithdraw} disabled={loading} className="w-full mt-10 bg-blue-600 hover:bg-blue-700 text-white font-black py-6 rounded-[24px] shadow-2xl shadow-blue-900/40 transition-all disabled:opacity-50 text-xl tracking-widest">
+                {loading ? 'ĐANG XỬ LÝ...' : 'XÁC NHẬN RÚT TIỀN'}
+             </button>
+          </div>
+        </div>
+
+        <div className="bg-[#151a24] rounded-[48px] p-10 border border-gray-800 shadow-xl h-fit">
+           <h3 className="text-xl font-black text-white mb-8 uppercase tracking-widest">Lịch sử giao dịch</h3>
+           <div className="space-y-4">
+              {history.map(item => (
+                <div key={item.id} className="p-5 bg-gray-900/50 rounded-3xl border border-gray-800 flex justify-between items-center group hover:bg-gray-800 transition-all">
+                  <div>
+                    <p className="text-white font-black text-lg">{item.amount.toLocaleString()}đ</p>
+                    <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">{item.method} • {new Date(item.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <span className={`text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest ${item.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : item.status === 'completed' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                    {item.status}
+                  </span>
+                </div>
+              ))}
+              {history.length === 0 && <p className="text-gray-700 text-center py-20 font-bold uppercase text-[10px] tracking-widest">Không có dữ liệu</p>}
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default WithdrawPage;
