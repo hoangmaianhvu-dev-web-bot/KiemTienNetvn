@@ -1,45 +1,35 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 
-const initApp = () => {
-  const rootElement = document.getElementById('root');
-  const loader = document.getElementById('loading-overlay');
+const rootElement = document.getElementById('root');
+const loader = document.getElementById('loading-overlay');
 
-  if (rootElement) {
-    try {
-      const root = ReactDOM.createRoot(rootElement);
-      root.render(
-        <React.StrictMode>
-          <App />
-        </React.StrictMode>
-      );
+if (rootElement) {
+  const root = createRoot(rootElement);
+  
+  // Render App
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
 
-      // Ẩn màn hình chờ sau khi render bắt đầu
-      if (loader) {
-        setTimeout(() => {
-          loader.style.opacity = '0';
-          setTimeout(() => {
-            loader.style.visibility = 'hidden';
-            loader.remove();
-          }, 500);
-        }, 300);
-      }
-    } catch (error) {
-      console.error("React render error:", error);
-      if (rootElement) {
-        rootElement.innerHTML = `<div style="color: white; padding: 20px; text-align: center; font-family: sans-serif;">
-          <h2 style="color: #ef4444;">Lỗi khởi tạo hệ thống</h2>
-          <p>Vui lòng làm mới trang (F5). Nếu vẫn lỗi, hãy kiểm tra kết nối mạng.</p>
-        </div>`;
-      }
+  // Xử lý ẩn loader sau khi ứng dụng đã mount
+  const hideLoader = () => {
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => {
+        if (loader.parentNode) loader.remove();
+      }, 500);
     }
-  }
-};
+  };
 
-// Khởi chạy khi tài nguyên đã sẵn sàng
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
+  // Đợi window load hoàn toàn hoặc timeout để chắc chắn không bị đen màn
+  if (document.readyState === 'complete') {
+    hideLoader();
+  } else {
+    window.addEventListener('load', hideLoader);
+    setTimeout(hideLoader, 2000); // Failsafe
+  }
 }
