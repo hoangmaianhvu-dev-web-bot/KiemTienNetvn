@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KiemTienNet - MMO Platform</title>
     
-    <!-- 1. Preconnect to font domains to improve loading and prevent resolution errors -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- 2. Optimized Google Fonts link with display=swap and correct attributes -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
 
-    <!-- 3. Tailwind CDN (Keep this before custom styles) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style type="text/css">
@@ -25,7 +21,6 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        /* Custom Scrollbar Styles */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -41,7 +36,6 @@
         }
     </style>
 
-    <!-- 4. ESM Import Map -->
     <script type="importmap">
     {
       "imports": {
@@ -57,9 +51,6 @@
     </script>
 
     <script>
-        /**
-         * SHIELD: Ngăn chặn các lỗi rác từ Browser Extension (Chrome/Edge)
-         */
         (function() {
             const suppressedErrors = [
                 "message port closed",
