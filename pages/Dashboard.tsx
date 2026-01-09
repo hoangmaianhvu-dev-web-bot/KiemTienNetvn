@@ -18,29 +18,29 @@ const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
     { name: 'CN', value: 700 },
   ];
 
-  const isAdmin = profile.role === 'admin';
+  const isAdmin = profile?.role === 'admin';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
-          <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2">🚀 Tổng quan tài khoản</p>
+          <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2">🚀 Thống kê tổng quan</p>
           <h1 className="text-3xl md:text-4xl font-black text-white">
-            Chào {profile.full_name?.split(' ')[0] || 'bạn'}, <span className="text-gray-500">{isAdmin ? 'Quyền Admin tối thượng!' : 'thật vui khi bạn quay lại!'}</span>
+            Chào {profile?.full_name?.split(' ')[0] || 'bạn'}, <span className="text-gray-500">{isAdmin ? 'hệ thống đang hoạt động tốt!' : 'thật vui khi thấy bạn!'}</span>
           </h1>
         </div>
         <div className="flex items-center gap-3 bg-blue-600/10 border border-blue-500/20 px-4 py-2 rounded-full">
            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
-           <span className="text-blue-400 text-[10px] font-black uppercase tracking-widest">{isAdmin ? 'ADMIN CONTROL PANEL' : 'SERVER: HN-01 (LIVE)'}</span>
+           <span className="text-blue-400 text-[10px] font-black uppercase tracking-widest">{isAdmin ? 'BẢNG QUẢN TRỊ ADMIN' : 'SERVER TRỰC TUYẾN'}</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[
-          { label: 'Số dư khả dụng', value: isAdmin ? '∞ VÔ HẠN' : `${profile.balance?.toLocaleString() || 0}đ`, icon: '💰', color: 'text-blue-500' },
-          { label: 'Lợi nhuận tích lũy', value: isAdmin ? 'TỐI ĐA' : `${profile.total_earned?.toLocaleString() || 0}đ`, icon: '📈', color: 'text-green-500' },
-          { label: 'Đã hoàn thành', value: profile.tasks_completed || 0, icon: '✅', color: 'text-purple-500' },
-          { label: 'Mạng lưới bạn bè', value: 5, icon: '👥', color: 'text-indigo-500' },
+          { label: 'Số dư hiện tại', value: isAdmin ? '∞ VÔ HẠN' : `${Number(profile?.balance || 0).toLocaleString()}đ`, icon: '💰', color: 'text-blue-500' },
+          { label: 'Tổng đã kiếm', value: isAdmin ? 'TỐI ĐA' : `${Number(profile?.total_earned || 0).toLocaleString()}đ`, icon: '📈', color: 'text-green-500' },
+          { label: 'Nhiệm vụ xong', value: profile?.tasks_completed || 0, icon: '✅', color: 'text-purple-500' },
+          { label: 'Người giới thiệu', value: 0, icon: '👥', color: 'text-indigo-500' },
         ].map((stat, i) => (
           <div key={i} className="bg-[#151a24] p-8 rounded-[40px] border border-gray-800 group hover:border-blue-500/30 transition-all shadow-xl">
             <div className="flex justify-between items-start mb-6">
@@ -58,8 +58,8 @@ const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
         <div className="lg:col-span-2 bg-[#151a24] p-10 rounded-[48px] border border-gray-800 shadow-2xl">
            <div className="flex justify-between items-center mb-12">
               <div>
-                <h3 className="text-2xl font-black text-white mb-1">Phân tích thu nhập</h3>
-                <p className="text-gray-500 text-xs font-medium uppercase tracking-widest">Biến động số dư trong 7 ngày</p>
+                <h3 className="text-2xl font-black text-white mb-1">Biểu đồ thu nhập</h3>
+                <p className="text-gray-500 text-xs font-medium uppercase tracking-widest">Dòng tiền trong tuần này</p>
               </div>
            </div>
            <div className="h-64 w-full">
@@ -81,13 +81,13 @@ const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
            <div>
               <div className="flex justify-between items-center mb-10">
                  <h3 className="text-2xl font-black text-white">Chỉ tiêu</h3>
-                 <span className="bg-blue-600/10 text-blue-500 text-[10px] font-black px-3 py-1.5 rounded-full border border-blue-500/20">70% XONG</span>
+                 <span className="bg-blue-600/10 text-blue-500 text-[10px] font-black px-3 py-1.5 rounded-full border border-blue-500/20">0%</span>
               </div>
               <div className="space-y-8">
                 {[
-                  { label: 'VƯỢT LINK', progress: 60, color: 'bg-blue-500' },
-                  { label: 'MỜI BẠN', progress: 33, color: 'bg-purple-500' },
-                  { label: 'ADS VIDEO', progress: 80, color: 'bg-green-500' }
+                  { label: 'VƯỢT LINK', progress: 0, color: 'bg-blue-500' },
+                  { label: 'MỜI BẠN', progress: 0, color: 'bg-purple-500' },
+                  { label: 'XEM VIDEO', progress: 0, color: 'bg-green-500' }
                 ].map((task, i) => (
                   <div key={i}>
                     <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">
@@ -104,7 +104,7 @@ const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
            <div className="mt-12 bg-blue-600 p-8 rounded-[32px] relative overflow-hidden group cursor-pointer shadow-2xl shadow-blue-900/30">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-[50px] rounded-full translate-x-16 -translate-y-16 group-hover:scale-150 transition-transform"></div>
               <p className="text-blue-100 text-[10px] font-black uppercase tracking-widest mb-2">Thưởng nóng</p>
-              <p className="text-white text-sm font-bold leading-relaxed">Đạt 100% chỉ tiêu nhận ngay <span className="underline decoration-2">10.000đ</span> tiền mặt!</p>
+              <p className="text-white text-sm font-bold leading-relaxed">Đạt chỉ tiêu tuần nhận thêm <span className="underline decoration-2">50.000đ</span>!</p>
            </div>
         </div>
       </div>

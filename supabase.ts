@@ -7,9 +7,9 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
- * SQL SCHEMA ĐẦY ĐỦ (Copy và chạy trong SQL Editor của Supabase):
+ * SQL SCHEMA HOÀN CHỈNH CHO GITHUB (Chạy trong SQL Editor của Supabase):
  * 
- * -- 1. Bảng Profiles
+ * -- 1. Bảng Profiles (Lưu thông tin người dùng)
  * create table public.profiles (
  *   id uuid references auth.users not null primary key,
  *   email text,
@@ -22,7 +22,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
  *   created_at timestamp with time zone default now()
  * );
  * 
- * -- 2. Bảng Tasks
+ * -- 2. Bảng Tasks (Nhiệm vụ kiếm tiền)
  * create table public.tasks (
  *   id uuid default gen_random_uuid() primary key,
  *   title text not null,
@@ -34,7 +34,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
  *   created_at timestamp with time zone default now()
  * );
  * 
- * -- 3. Bảng Withdrawals
+ * -- 3. Bảng Withdrawals (Lệnh rút tiền)
  * create table public.withdrawals (
  *   id uuid default gen_random_uuid() primary key,
  *   user_id uuid references public.profiles(id),
@@ -46,7 +46,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
  *   created_at timestamp with time zone default now()
  * );
  * 
- * -- 4. Bảng Announcements
+ * -- 4. Bảng Announcements (Thông báo Admin)
  * create table public.announcements (
  *   id uuid default gen_random_uuid() primary key,
  *   title text not null,
@@ -54,11 +54,19 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
  *   created_at timestamp with time zone default now()
  * );
  * 
- * -- Enable RLS & Policies
+ * -- PHÂN QUYỀN (RLS POLICIES) - CỰC KỲ QUAN TRỌNG ĐỂ APP HOẠT ĐỘNG
  * alter table public.profiles enable row level security;
- * create policy "Viewable by all" on profiles for select using (true);
- * create policy "Self manage" on profiles for update using (auth.uid() = id);
+ * create policy "Cho phép xem thông tin cá nhân" on public.profiles for select using (true);
+ * create policy "Cho phép người dùng tự tạo Profile khi đăng ký" on public.profiles for insert with check (auth.uid() = id);
+ * create policy "Cho phép người dùng tự cập nhật thông tin" on public.profiles for update using (auth.uid() = id);
+ * 
+ * alter table public.withdrawals enable row level security;
+ * create policy "Người dùng chỉ xem lệnh rút của mình" on public.withdrawals for select using (auth.uid() = user_id);
+ * create policy "Người dùng tự tạo lệnh rút" on public.withdrawals for insert with check (auth.uid() = user_id);
+ * 
+ * alter table public.tasks enable row level security;
+ * create policy "Mọi người đều xem được nhiệm vụ" on public.tasks for select using (true);
  * 
  * alter table public.announcements enable row level security;
- * create policy "Public view" on announcements for select using (true);
+ * create policy "Mọi người đều xem được thông báo" on public.announcements for select using (true);
  */
