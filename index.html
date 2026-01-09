@@ -9,57 +9,79 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+    <!-- Tailwind fallback -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style type="text/css">
-        /* CSS nội bộ quan trọng nhất để đảm bảo trang không bị đen khi file ngoài lỗi */
+        /* CRITICAL CSS: Đảm bảo giao diện tối luôn hiển thị kể cả khi mất mạng/lỗi CDN */
+        :root {
+            --bg-dark: #0b0e14;
+            --blue-primary: #3b82f6;
+        }
         body {
+            background-color: var(--bg-dark) !important;
+            color: #ffffff !important;
             font-family: 'Inter', sans-serif;
-            background-color: #0b0e14;
-            color: #ffffff;
             margin: 0;
             padding: 0;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
         #loading-overlay {
             position: fixed;
             inset: 0;
-            background: #0b0e14;
+            background: var(--bg-dark);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.4s ease;
         }
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #1f2937;
-            border-top: 4px solid #3b82f6;
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(59, 130, 246, 0.1);
+            border-top: 3px solid var(--blue-primary);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0b0e14; }
-        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #374151; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 10px; }
     </style>
 
     <script>
-        // Tự động làm mới trang khi mạng ổn định trở lại để nạp lại tài nguyên bị thiếu
-        window.addEventListener('online', function() {
-            console.log('Mạng đã khôi phục. Đang tải lại ứng dụng...');
-            window.location.reload();
-        });
+        /**
+         * FIX TRUYỆT ĐỂ LỖI MESSAGE PORT
+         * Quy tắc: Không dùng async listener, luôn return true cho tác vụ async, luôn sendResponse.
+         */
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+            const originalAddListener = chrome.runtime.onMessage.addListener;
+            chrome.runtime.onMessage.addListener = function(callback) {
+                return originalAddListener.call(chrome.runtime.onMessage, (message, sender, sendResponse) => {
+                    // Chuyển logic sang một hàm xử lý để đảm bảo an toàn
+                    try {
+                        const result = callback(message, sender, sendResponse);
+                        // Nếu callback trả về Promise hoặc explicit true, giữ port mở
+                        if (result instanceof Promise || result === true) {
+                            return true;
+                        }
+                    } catch (err) {
+                        console.error("Port Error:", err);
+                        sendResponse({ error: err.message });
+                    }
+                });
+            };
+        }
 
-        // Ngăn chặn lỗi crash do Extension hoặc lỗi message port đóng đột ngột
-        window.addEventListener('unhandledrejection', function(event) {
-            if (event.reason && (String(event.reason.message || event.reason).includes('message port closed') || String(event.reason.message || event.reason).includes('Extension'))) {
-                event.stopImmediatePropagation();
+        // Tự động reload khi mạng phục hồi
+        window.addEventListener('online', () => window.location.reload());
+
+        // Chặn lỗi vặt từ Extension làm crash luồng chính
+        window.addEventListener('unhandledrejection', (event) => {
+            if (String(event.reason?.message).includes('message port closed')) {
                 event.preventDefault();
             }
         });
@@ -83,14 +105,14 @@
 </script>
 </head>
 <body>
-    <!-- Màn hình chờ với CSS inline đảm bảo hiển thị ngay lập tức -->
     <div id="loading-overlay">
         <div class="flex flex-col items-center">
             <div class="spinner"></div>
-            <p class="mt-4 text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Bảo mật hệ thống đang khởi tạo...</p>
+            <p style="margin-top: 1rem; color: #3b82f6; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;">
+                Đang nạp dữ liệu bảo mật...
+            </p>
         </div>
     </div>
-
     <div id="root"></div>
 </body>
 </html>

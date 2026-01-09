@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './supabase.ts';
@@ -22,22 +21,39 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchProfile(session.user.id);
-      else setLoading(false);
-    });
+    let mounted = true;
+
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) {
+          setSession(session);
+          if (session) await fetchProfile(session.user.id);
+          else setLoading(false);
+        }
+      } catch (err) {
+        console.error("Auth init error:", err);
+        if (mounted) setLoading(false);
+      }
+    };
+
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) fetchProfile(session.user.id);
-      else {
-        setProfile(null);
-        setLoading(false);
+      if (mounted) {
+        setSession(session);
+        if (session) fetchProfile(session.user.id);
+        else {
+          setProfile(null);
+          setLoading(false);
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
@@ -51,7 +67,7 @@ const App: React.FC = () => {
       if (error) throw error;
       if (data) setProfile(data);
     } catch (err: any) {
-      console.error('Fetch error:', err.message);
+      console.error('Profile fetch error:', err.message);
     } finally {
       setLoading(false);
     }
@@ -64,11 +80,11 @@ const App: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#0b0e14]">
-        <div className="relative w-16 h-16">
-          <div className="absolute inset-0 rounded-full border-4 border-blue-500/20"></div>
+        <div className="relative w-12 h-12">
+          <div className="absolute inset-0 rounded-full border-4 border-blue-500/10"></div>
           <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 animate-spin"></div>
         </div>
-        <p className="mt-6 text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] animate-pulse">KiemTienNet Security...</p>
+        <p className="mt-6 text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] animate-pulse">Đang đồng bộ bảo mật...</p>
       </div>
     );
   }
@@ -92,6 +108,7 @@ const App: React.FC = () => {
             <Route path="/support" element={isAuth && profile ? <SupportPage profile={profile} /> : <Navigate to="/login" />} />
             <Route path="/profile" element={isAuth ? <ProfilePage profile={profile} /> : <Navigate to="/login" />} />
             <Route path="/admin" element={isAuth && profile?.role === 'admin' ? <AdminPage profile={profile} /> : <Navigate to="/dashboard" />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
         {!isAuth && <Footer />}
