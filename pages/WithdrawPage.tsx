@@ -34,19 +34,19 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile }) => {
     const val = Number(amount);
     if (!val || val < 10000) return alert('Số tiền tối thiểu là 10.000đ');
     
-    // Check required fields based on method
     if (method === 'bank' && (!bankName || !accountNumber)) {
       return alert('Vui lòng nhập tên ngân hàng và số tài khoản');
     }
     if (method === 'garena' && !accountNumber) {
-      return alert('Vui lòng nhập ID Garena');
+      return alert('Vui lòng nhập ID Garena / Số điện thoại');
     }
 
-    if (!isAdmin && val > profile.balance) return alert('Số dư không đủ');
+    // Admin không bị giới hạn số dư
+    if (!isAdmin && val > profile.balance) return alert('Số dư hiện tại không đủ');
 
     setLoading(true);
     try {
-      // 1. Create withdrawal record
+      // 1. Lưu lệnh rút
       const { error: withdrawError } = await supabase
         .from('withdrawals')
         .insert([{ 
@@ -54,13 +54,13 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile }) => {
           amount: val, 
           method, 
           status: isAdmin ? 'completed' : 'pending',
-          bank_name: method === 'bank' ? bankName : null,
+          bank_name: method === 'bank' ? bankName : 'GARENA',
           account_number: accountNumber
         }]);
 
       if (withdrawError) throw withdrawError;
 
-      // 2. Deduct money (Admin is exempted to maintain infinite balance)
+      // 2. Trừ tiền (Admin không bị trừ)
       if (!isAdmin) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -69,7 +69,7 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile }) => {
         if (profileError) throw profileError;
       }
 
-      alert(isAdmin ? 'Admin rút tiền thành công (Hệ thống tự duyệt)!' : 'Gửi yêu cầu rút tiền thành công!');
+      alert(isAdmin ? 'Admin rút tiền thành công (Hệ thống tự động duyệt)!' : 'Gửi yêu cầu thành công, vui lòng chờ Admin duyệt!');
       setAmount('');
       setBankName('');
       setAccountNumber('');
@@ -92,7 +92,7 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile }) => {
             <h2 className="text-6xl font-black text-white mb-10 tracking-tight">{isAdmin ? '∞ VÔ HẠN' : `${profile.balance?.toLocaleString()}đ`}</h2>
             <div className="flex gap-4">
                <div className="bg-white/10 px-4 py-2 rounded-xl text-[10px] font-black text-white uppercase tracking-widest border border-white/10">BẢO MẬT SSL</div>
-               <div className="bg-blue-400/20 px-4 py-2 rounded-xl text-[10px] font-black text-blue-100 uppercase tracking-widest border border-blue-400/20">QUẢN TRỊ VIÊN</div>
+               {isAdmin && <div className="bg-yellow-400/20 px-4 py-2 rounded-xl text-[10px] font-black text-yellow-100 uppercase tracking-widest border border-yellow-400/20">QUYỀN QUẢN TRỊ</div>}
             </div>
           </div>
 
@@ -125,7 +125,7 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile }) => {
                   <div className="grid md:grid-cols-2 gap-6 animate-in slide-in-from-bottom-2">
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Tên ngân hàng</label>
-                      <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="VD: MB Bank, VCB..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm" />
+                      <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="VD: MB Bank, Vietcombank..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Số tài khoản</label>
@@ -134,7 +134,7 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile }) => {
                   </div>
                 ) : (
                   <div className="animate-in slide-in-from-bottom-2">
-                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">ID Garena / Số điện thoại</label>
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">ID Garena / Số điện thoại nhận thẻ</label>
                     <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Nhập ID tài khoản game..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm" />
                   </div>
                 )}
@@ -147,12 +147,12 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile }) => {
         </div>
 
         <div className="bg-[#151a24] rounded-[48px] p-10 border border-gray-800 shadow-xl h-fit">
-           <h3 className="text-xl font-black text-white mb-8 uppercase tracking-widest">Lịch sử giao dịch</h3>
+           <h3 className="text-xl font-black text-white mb-8 uppercase tracking-widest">Lịch sử mới nhất</h3>
            <div className="space-y-4">
               {history.map(item => (
                 <div key={item.id} className="p-5 bg-gray-900/50 rounded-3xl border border-gray-800 flex justify-between items-center group hover:bg-gray-800 transition-all">
                   <div>
-                    <p className="text-white font-black text-lg">{item.amount.toLocaleString()}đ</p>
+                    <p className="text-white font-black text-lg">{Number(item.amount).toLocaleString()}đ</p>
                     <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">{item.method} • {new Date(item.created_at).toLocaleDateString()}</p>
                   </div>
                   <span className={`text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest ${item.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : item.status === 'completed' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
