@@ -9,11 +9,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <!-- Tailwind fallback -->
+    <!-- Tailwind CSS CDN với fallback dự phòng -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style type="text/css">
-        /* CRITICAL CSS: Đảm bảo giao diện tối luôn hiển thị kể cả khi mất mạng/lỗi CDN */
+        /* CRITICAL CSS: Đảm bảo nền luôn tối và không bị trắng trang khi nạp chậm */
         :root {
             --bg-dark: #0b0e14;
             --blue-primary: #3b82f6;
@@ -38,8 +38,8 @@
             transition: opacity 0.4s ease;
         }
         .spinner {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border: 3px solid rgba(59, 130, 246, 0.1);
             border-top: 3px solid var(--blue-primary);
             border-radius: 50%;
@@ -47,44 +47,53 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 10px; }
+        #root { display: block; min-height: 100vh; }
     </style>
 
     <script>
         /**
-         * FIX TRUYỆT ĐỂ LỖI MESSAGE PORT
-         * Quy tắc: Không dùng async listener, luôn return true cho tác vụ async, luôn sendResponse.
+         * FIX LỖI PORT CLOSED: Bảo vệ các kết nối Message Port của Extension.
+         * Tự động bọc mọi addListener để đảm bảo luôn trả về true cho các tác vụ async.
          */
         if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
             const originalAddListener = chrome.runtime.onMessage.addListener;
-            chrome.runtime.onMessage.addListener = function(callback) {
-                return originalAddListener.call(chrome.runtime.onMessage, (message, sender, sendResponse) => {
-                    // Chuyển logic sang một hàm xử lý để đảm bảo an toàn
-                    try {
-                        const result = callback(message, sender, sendResponse);
-                        // Nếu callback trả về Promise hoặc explicit true, giữ port mở
-                        if (result instanceof Promise || result === true) {
-                            return true;
+            chrome.runtime.onMessage.addListener = function(userCallback) {
+                originalAddListener.call(chrome.runtime.onMessage, (message, sender, sendResponse) => {
+                    // Logic wrapper đảm bảo an toàn cho Port
+                    const handleResponse = async () => {
+                        try {
+                            // Gọi callback gốc của người dùng
+                            const result = userCallback(message, sender, sendResponse);
+                            // Nếu callback trả về Promise, đợi nó xong
+                            if (result instanceof Promise) {
+                                await result;
+                            }
+                        } catch (err) {
+                            console.error("Message Port Error:", err);
+                            // Đảm bảo luôn sendResponse để đóng vòng lặp tin nhắn kể cả khi lỗi
+                            try { sendResponse({ success: false, error: err.message }); } catch(e) {}
                         }
-                    } catch (err) {
-                        console.error("Port Error:", err);
-                        sendResponse({ error: err.message });
-                    }
+                    };
+                    handleResponse();
+                    return true; // BẮT BUỘC: Giữ cổng kết nối mở cho phản hồi bất đồng bộ
                 });
             };
         }
 
-        // Tự động reload khi mạng phục hồi
-        window.addEventListener('online', () => window.location.reload());
-
-        // Chặn lỗi vặt từ Extension làm crash luồng chính
-        window.addEventListener('unhandledrejection', (event) => {
-            if (String(event.reason?.message).includes('message port closed')) {
-                event.preventDefault();
+        /**
+         * TỰ PHỤC HỒI KHI LỖI MẠNG
+         * Tải lại trang nếu gặp lỗi ERR_NETWORK_CHANGED hoặc lỗi nạp tài nguyên quan trọng.
+         */
+        window.addEventListener('error', (e) => {
+            const msg = e.message || "";
+            if (msg.includes('ERR_NETWORK_CHANGED') || e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
+                console.warn("Phát hiện lỗi nạp tài nguyên/mạng, đang tự động sửa lỗi...");
+                setTimeout(() => location.reload(), 1500);
             }
-        });
+        }, true);
+
+        // Theo dõi trạng thái Online/Offline
+        window.addEventListener('online', () => location.reload());
     </script>
 
     <script type="importmap">
@@ -105,11 +114,12 @@
 </script>
 </head>
 <body>
+    <!-- Màn hình chờ với CSS inline bảo vệ -->
     <div id="loading-overlay">
         <div class="flex flex-col items-center">
             <div class="spinner"></div>
-            <p style="margin-top: 1rem; color: #3b82f6; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;">
-                Đang nạp dữ liệu bảo mật...
+            <p style="margin-top: 1.5rem; color: #3b82f6; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; animation: pulse 2s infinite;">
+                ĐANG KHỞI CHẠY HỆ THỐNG...
             </p>
         </div>
     </div>
