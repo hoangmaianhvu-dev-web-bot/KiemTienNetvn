@@ -147,10 +147,10 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
                   </div>
                 ) : (
                   <div className="animate-in fade-in slide-in-from-bottom-4">
-                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Gmail nhận mã thẻ Garena</label>
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Email nhận mã thẻ Garena</label>
                     <input type="email" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Nhập địa chỉ Gmail của bạn..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm focus:border-blue-500 outline-none placeholder-gray-700" />
                     <p className="mt-4 text-[9px] text-gray-600 font-black uppercase ml-2 leading-relaxed">
-                      * <span className="text-blue-500">Lưu ý:</span> Mã thẻ sẽ được gửi vào Gmail này. Vui lòng kiểm tra kỹ để tránh mất thẻ.
+                      * <span className="text-blue-500">Lưu ý:</span> Mã thẻ sẽ được gửi vào hòm thư Gmail này. Vui lòng kiểm tra kỹ để tránh sai sót.
                     </p>
                   </div>
                 )}
