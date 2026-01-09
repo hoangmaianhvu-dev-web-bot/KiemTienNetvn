@@ -23,17 +23,34 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
+    // HÀM CỨU CÁNH CHO AUTH: Không để việc check auth làm treo web quá 5s
+    const authTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("Auth timeout: Tiếp tục vào web với trạng thái khách.");
+        setLoading(false);
+      }
+    }, 5000);
+
     const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
         if (mounted) {
           setSession(session);
-          if (session) await fetchProfile(session.user.id);
-          else setLoading(false);
+          if (session) {
+            await fetchProfile(session.user.id);
+          } else {
+            setLoading(false);
+            clearTimeout(authTimeout);
+          }
         }
       } catch (err) {
         console.error("Auth init error:", err);
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          clearTimeout(authTimeout);
+        }
       }
     };
 
@@ -53,6 +70,7 @@ const App: React.FC = () => {
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      clearTimeout(authTimeout);
     };
   }, []);
 

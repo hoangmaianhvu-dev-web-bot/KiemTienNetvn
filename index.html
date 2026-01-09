@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KiemTienNet - MMO Platform</title>
+    <title>KiemTienNet - Hệ thống MMO 2025</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,74 +14,33 @@
     <style type="text/css">
         :root { --bg-dark: #0b0e14; --blue-primary: #3b82f6; }
         body { background-color: var(--bg-dark) !important; color: #ffffff !important; font-family: 'Inter', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
-        #loading-overlay { position: fixed; inset: 0; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .spinner { width: 36px; height: 36px; border: 3px solid rgba(59, 130, 246, 0.1); border-top: 3px solid var(--blue-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        #loading-overlay { position: fixed; inset: 0; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s ease; }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.1); border-top: 3px solid var(--blue-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse-custom { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .animate-pulse-fast { animation: pulse-custom 1.5s ease-in-out infinite; }
     </style>
 
     <script>
-        /**
-         * ULTIMATE PORT SHIELD 2.0 - FIX 100% MESSAGE PORT CLOSED
-         * Cơ chế: Monkey-patch chrome.runtime.onMessage để tự động hóa việc quản lý sendResponse.
-         */
         (function() {
-            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-                const originalAddListener = chrome.runtime.onMessage.addListener;
-                
-                chrome.runtime.onMessage.addListener = function(originalCallback) {
-                    // Tạo một wrapper listener tiêu chuẩn (không async)
-                    return originalAddListener.call(chrome.runtime.onMessage, (message, sender, sendResponse) => {
-                        let isResponded = false;
+            window.addEventListener('unhandledrejection', function(event) {
+                const msg = event.reason?.message || "";
+                if (msg.includes('message port closed') || msg.includes('captcha') || msg.includes('runtime.lastError')) {
+                    event.preventDefault();
+                }
+            });
 
-                        // Bọc sendResponse để ngăn lỗi "gọi nhiều lần"
-                        const safeSendResponse = (response) => {
-                            if (isResponded) return;
-                            isResponded = true;
-                            try {
-                                sendResponse(response);
-                            } catch (e) {
-                                console.warn("Port already closed or invalid:", e.message);
-                            }
-                        };
-
-                        // 1. Thực thi logic xử lý
-                        try {
-                            const result = originalCallback(message, sender, safeSendResponse);
-
-                            // 2. Nếu callback trả về Promise (là hàm async) hoặc trả về true
-                            if (result instanceof Promise) {
-                                result.catch(err => {
-                                    console.error("Async Listener Error:", err);
-                                    safeSendResponse({ success: false, error: err.message });
-                                });
-                                return true; // Giữ port mở cho Promise
-                            } else if (result === true) {
-                                return true; // Giữ port mở theo yêu cầu thủ công
-                            }
-                        } catch (err) {
-                            console.error("Sync Listener Crash:", err);
-                            safeSendResponse({ success: false, error: err.message });
-                        }
-
-                        // 3. Failsafe: Nếu sau 1 tick mà chưa phản hồi và không return true, đóng port an toàn
-                        setTimeout(() => {
-                            if (!isResponded) {
-                                safeSendResponse({ success: false, error: "Auto-closed by Shield to prevent Port Error" });
-                            }
-                        }, 0);
-                    });
-                };
-                console.log("🛡️ Port Shield 2.0 Active");
-            }
+            const rawError = console.error;
+            console.error = function() {
+                const msg = arguments[0];
+                if (typeof msg === 'string' && (
+                    msg.includes('captcha') || 
+                    msg.includes('Message port closed') || 
+                    msg.includes('runtime.lastError')
+                )) return;
+                rawError.apply(console, arguments);
+            };
         })();
-
-        // Tự động reload khi lỗi mạng nghiêm trọng
-        window.addEventListener('error', (e) => {
-            if (e.message && (e.message.includes('ERR_NETWORK_CHANGED') || e.message.includes('Script error'))) {
-                console.warn("Mạng lỗi, đang phục hồi...");
-                setTimeout(() => location.reload(), 1000);
-            }
-        }, true);
     </script>
 
     <script type="importmap">
@@ -105,8 +64,8 @@
     <div id="loading-overlay">
         <div class="flex flex-col items-center">
             <div class="spinner"></div>
-            <p style="margin-top: 1.5rem; color: #3b82f6; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em;">
-                ĐANG BẢO MẬT KẾT NỐI...
+            <p style="margin-top: 2rem; color: #3b82f6; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.4em;" class="animate-pulse-fast">
+                BẢO MẬT HỆ THỐNG...
             </p>
         </div>
     </div>

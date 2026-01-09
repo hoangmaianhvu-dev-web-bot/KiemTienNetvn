@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Withdrawal } from '../types';
 import { supabase } from '../supabase';
@@ -33,13 +32,13 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
 
   const handleWithdraw = async () => {
     const val = Number(amount);
-    if (!val || val < 10000) return alert('Số tiền tối thiểu là 10.000đ');
+    if (!val || val < 10000) return alert('Số tiền rút tối thiểu là 10.000đ');
     
     if (method === 'bank' && (!bankName || !accountNumber)) {
-      return alert('Vui lòng nhập tên ngân hàng và số tài khoản');
+      return alert('Vui lòng nhập tên ngân hàng và số tài khoản thụ hưởng');
     }
-    if (method === 'garena' && !accountNumber) {
-      return alert('Vui lòng nhập ID Garena / Số điện thoại');
+    if (method === 'garena' && (!accountNumber || !accountNumber.includes('@'))) {
+      return alert('Vui lòng nhập chính xác Gmail để nhận mã thẻ Garena');
     }
 
     if (!isAdmin && val > (profile.balance || 0)) return alert('Số dư hiện tại không đủ để thực hiện lệnh rút này');
@@ -67,7 +66,7 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
         if (profileError) throw profileError;
       }
 
-      alert(isAdmin ? 'Admin rút tiền thành công (Đã tự động phê duyệt)!' : 'Gửi yêu cầu thành công! Vui lòng chờ 15-60p để Admin xử lý.');
+      alert(isAdmin ? 'Admin rút tiền thành công (Đã tự động phê duyệt)!' : 'Gửi yêu cầu thành công! Mã thẻ hoặc tiền sẽ được xử lý trong 15-60 phút.');
       setAmount('');
       setBankName('');
       setAccountNumber('');
@@ -93,7 +92,7 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
             <div className="flex gap-4">
                <div className="bg-white/10 px-5 py-2.5 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest border border-white/10 flex items-center gap-2">
                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                 Bảo mật SSL 256-bit
+                 Bảo mật giao dịch 100%
                </div>
                {isAdmin && (
                  <div className="bg-yellow-400/20 px-5 py-2.5 rounded-2xl text-[10px] font-black text-yellow-100 uppercase tracking-widest border border-yellow-400/20">
@@ -106,15 +105,15 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
           <div className="bg-[#151a24] rounded-[48px] p-12 border border-gray-800 shadow-xl">
              <h3 className="text-2xl font-black text-white mb-10 flex items-center gap-4">
                 <span className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-blue-900/30">💳</span>
-                Cấu hình thanh toán
+                Chọn phương thức nhận
              </h3>
              
              <div className="grid grid-cols-2 gap-6 mb-12">
-                <button onClick={() => setMethod('bank')} className={`p-8 rounded-[32px] border-2 transition-all flex flex-col items-center gap-4 group ${method === 'bank' ? 'border-blue-500 bg-blue-500/10 text-white' : 'border-gray-800 text-gray-500 hover:border-gray-700'}`}>
+                <button onClick={() => { setMethod('bank'); setAccountNumber(''); }} className={`p-8 rounded-[32px] border-2 transition-all flex flex-col items-center gap-4 group ${method === 'bank' ? 'border-blue-500 bg-blue-500/10 text-white' : 'border-gray-800 text-gray-500 hover:border-gray-700'}`}>
                    <span className="text-4xl group-hover:scale-110 transition-transform">🏛️</span>
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em]">Chuyển khoản</span>
+                   <span className="text-[10px] font-black uppercase tracking-[0.2em]">Ngân hàng</span>
                 </button>
-                <button onClick={() => setMethod('garena')} className={`p-8 rounded-[32px] border-2 transition-all flex flex-col items-center gap-4 group ${method === 'garena' ? 'border-red-500 bg-red-500/10 text-white' : 'border-gray-800 text-gray-500 hover:border-gray-700'}`}>
+                <button onClick={() => { setMethod('garena'); setAccountNumber(''); }} className={`p-8 rounded-[32px] border-2 transition-all flex flex-col items-center gap-4 group ${method === 'garena' ? 'border-red-500 bg-red-500/10 text-white' : 'border-gray-800 text-gray-500 hover:border-gray-700'}`}>
                    <span className="text-4xl group-hover:scale-110 transition-transform">🎮</span>
                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Thẻ Garena</span>
                 </button>
@@ -122,7 +121,7 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
 
              <div className="space-y-8">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 ml-2">Số tiền rút (Tối thiểu 10,000đ)</label>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 ml-2">Số tiền muốn rút</label>
                   <div className="relative group">
                     <input 
                       type="number" 
@@ -138,18 +137,21 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
                 {method === 'bank' ? (
                   <div className="grid md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4">
                     <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Ngân hàng thụ hưởng</label>
-                      <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="VD: MB Bank, Vietcombank..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm focus:border-blue-500 outline-none" />
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Tên Ngân hàng</label>
+                      <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="VD: MB Bank, Momo..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm focus:border-blue-500 outline-none placeholder-gray-700" />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Số tài khoản / STK</label>
-                      <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Nhập STK chính xác..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm focus:border-blue-500 outline-none" />
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Số tài khoản (STK)</label>
+                      <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Nhập STK chính xác..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm focus:border-blue-500 outline-none placeholder-gray-700" />
                     </div>
                   </div>
                 ) : (
                   <div className="animate-in fade-in slide-in-from-bottom-4">
-                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">ID Garena / Số điện thoại nhận thẻ</label>
-                    <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="ID tài khoản hoặc SĐT..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm focus:border-blue-500 outline-none" />
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Gmail nhận mã thẻ Garena</label>
+                    <input type="email" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Nhập địa chỉ Gmail của bạn..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm focus:border-blue-500 outline-none placeholder-gray-700" />
+                    <p className="mt-4 text-[9px] text-gray-600 font-black uppercase ml-2 leading-relaxed">
+                      * <span className="text-blue-500">Lưu ý:</span> Mã thẻ sẽ được gửi vào Gmail này. Vui lòng kiểm tra kỹ để tránh mất thẻ.
+                    </p>
                   </div>
                 )}
              </div>
@@ -162,7 +164,7 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
                 {loading ? (
                    <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
-                   <>TIẾP TỤC RÚT TIỀN <span className="group-hover:translate-x-2 transition-transform">→</span></>
+                   <>XÁC NHẬN RÚT <span className="group-hover:translate-x-2 transition-transform">→</span></>
                 )}
              </button>
           </div>
@@ -178,24 +180,30 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
            
            <div className="space-y-4">
               {history.map(item => (
-                <div key={item.id} className="p-6 bg-gray-900/50 rounded-3xl border border-gray-800 flex justify-between items-center group hover:bg-gray-800 transition-all">
-                  <div>
-                    <p className="text-white font-black text-lg">{Number(item.amount).toLocaleString()}đ</p>
-                    <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mt-1">{item.method} • {new Date(item.created_at).toLocaleDateString('vi-VN')}</p>
+                <div key={item.id} className="p-6 bg-gray-900/50 rounded-3xl border border-gray-800 group hover:bg-gray-800 transition-all">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="text-white font-black text-lg">{Number(item.amount).toLocaleString()}đ</p>
+                      <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mt-1">{item.method === 'bank' ? '🏦 NGÂN HÀNG' : '🎮 GARENA'}</p>
+                    </div>
+                    <span className={`text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest ${
+                      item.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' : 
+                      item.status === 'completed' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 
+                      'bg-red-500/10 text-red-500 border border-red-500/20'
+                    }`}>
+                      {item.status === 'pending' ? 'Chờ duyệt' : item.status === 'completed' ? 'Thành công' : 'Đã hủy'}
+                    </span>
                   </div>
-                  <span className={`text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest ${
-                    item.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' : 
-                    item.status === 'completed' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 
-                    'bg-red-500/10 text-red-500 border border-red-500/20'
-                  }`}>
-                    {item.status}
-                  </span>
+                  <div className="pt-3 border-t border-gray-800/50">
+                    <p className="text-[10px] text-gray-600 font-bold truncate">Nhận qua: {item.account_number}</p>
+                    <p className="text-[9px] text-gray-700 mt-1 uppercase font-bold">{new Date(item.created_at).toLocaleString('vi-VN')}</p>
+                  </div>
                 </div>
               ))}
               {history.length === 0 && (
                 <div className="text-center py-20 flex flex-col items-center">
-                   <div className="text-4xl mb-4 opacity-20">📭</div>
-                   <p className="text-gray-700 font-bold uppercase text-[10px] tracking-widest">Bạn chưa có lệnh rút nào</p>
+                   <div className="text-4xl mb-4 opacity-10">📭</div>
+                   <p className="text-gray-700 font-bold uppercase text-[10px] tracking-widest">Không có giao dịch</p>
                 </div>
               )}
            </div>
