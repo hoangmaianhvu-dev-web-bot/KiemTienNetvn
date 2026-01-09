@@ -12,6 +12,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style type="text/css">
+        /* CSS nội bộ quan trọng nhất để đảm bảo trang không bị đen khi file ngoài lỗi */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0b0e14;
@@ -22,7 +23,6 @@
             -moz-osx-font-smoothing: grayscale;
             overflow-x: hidden;
         }
-        /* Stylesheet nội bộ quan trọng chống đen màn */
         #loading-overlay {
             position: fixed;
             inset: 0;
@@ -50,13 +50,13 @@
     </style>
 
     <script>
-        // Fix lỗi Network Changed - Tự động reload khi mạng ổn định
+        // Tự động làm mới trang khi mạng ổn định trở lại để nạp lại tài nguyên bị thiếu
         window.addEventListener('online', function() {
-            console.log('Hệ thống đã kết nối lại. Đang làm mới dữ liệu...');
+            console.log('Mạng đã khôi phục. Đang tải lại ứng dụng...');
             window.location.reload();
         });
 
-        // Chặn các lỗi message port từ Extension làm gián đoạn React
+        // Ngăn chặn lỗi crash do Extension hoặc lỗi message port đóng đột ngột
         window.addEventListener('unhandledrejection', function(event) {
             if (event.reason && (String(event.reason.message || event.reason).includes('message port closed') || String(event.reason.message || event.reason).includes('Extension'))) {
                 event.stopImmediatePropagation();
@@ -83,10 +83,11 @@
 </script>
 </head>
 <body>
+    <!-- Màn hình chờ với CSS inline đảm bảo hiển thị ngay lập tức -->
     <div id="loading-overlay">
         <div class="flex flex-col items-center">
             <div class="spinner"></div>
-            <p class="mt-4 text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Đang tải cấu hình bảo mật...</p>
+            <p class="mt-4 text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Bảo mật hệ thống đang khởi tạo...</p>
         </div>
     </div>
 
