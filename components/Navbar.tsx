@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { UserProfile, Announcement } from '../types.ts';
 import { supabase } from '../supabase.ts';
 
@@ -56,9 +55,13 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link to="/dashboard" className="flex items-center space-x-2">
-              <div className="bg-blue-600 p-1.5 rounded-lg"><span className="text-white font-bold text-lg">K</span></div>
-              <span className="text-white font-bold text-xl tracking-tight">KiemTienNet</span>
+            <Link to="/dashboard" className="flex items-center space-x-2 group">
+              <div className="bg-blue-600 p-1.5 rounded-lg flex items-center justify-center overflow-hidden">
+                <svg className="w-5 h-5 text-white" viewBox="0 0 100 100" fill="none">
+                  <path d="M30 35 C30 25, 70 25, 70 35 C70 45, 30 55, 30 65 C30 75, 70 75, 70 65" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span className="text-white font-black text-xl tracking-tighter group-hover:text-blue-500 transition-colors">KiemTienNet</span>
             </Link>
             <div className="hidden lg:block ml-10">
               <div className="flex items-baseline space-x-1">
@@ -100,17 +103,15 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
                     <span className="text-[10px] bg-blue-600 px-2 py-0.5 rounded-full text-white font-bold">MỚI</span>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
-                    {announcements.map(ann => (
+                    {announcements.length > 0 ? announcements.map(ann => (
                       <div key={ann.id} className="p-5 border-b border-gray-800/50 hover:bg-white/5 transition-all">
                         <p className="text-white font-bold text-xs mb-1">{ann.title}</p>
                         <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{ann.content}</p>
                         <p className="text-[9px] text-gray-700 mt-2 uppercase font-black">{new Date(ann.created_at).toLocaleDateString('vi-VN')}</p>
                       </div>
-                    ))}
-                    <div className="p-5 hover:bg-blue-600/5 transition-all">
-                      <p className="text-blue-500 font-bold text-xs mb-1">🎉 Chào mừng!</p>
-                      <p className="text-gray-400 text-[11px] leading-relaxed">Chào {profile?.full_name || 'thành viên'}, bắt đầu hành trình kiếm tiền ngay nào!</p>
-                    </div>
+                    )) : (
+                      <div className="p-10 text-center text-gray-600 text-[10px] font-bold uppercase tracking-widest">Không có thông báo</div>
+                    )}
                   </div>
                 </div>
               )}
@@ -121,10 +122,8 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
                 <p className="text-[10px] font-black text-white leading-none truncate max-w-[100px]">{profile?.full_name || 'Member'}</p>
                 <p className="text-[9px] text-blue-500 font-black mt-1 uppercase tracking-tighter">{profile?.role === 'admin' ? 'CHỦ HỆ THỐNG' : 'THÀNH VIÊN'}</p>
               </div>
-              <Link to="/profile">
-                <div className="h-8 w-8 rounded-full border border-blue-500/30 p-0.5 overflow-hidden">
-                  <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'User'}`} alt="avatar" className="rounded-full w-full h-full object-cover" />
-                </div>
+              <Link to="/profile" className="h-8 w-8 rounded-full border border-blue-500/30 p-0.5 overflow-hidden hover:border-blue-500 transition-colors">
+                <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'User'}`} alt="avatar" className="rounded-full w-full h-full object-cover" />
               </Link>
             </div>
           </div>

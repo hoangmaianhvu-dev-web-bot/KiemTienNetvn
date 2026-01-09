@@ -44,7 +44,9 @@ const LoginPage: React.FC = () => {
 
         <Link to="/" className="flex items-center space-x-2 relative z-10">
           <div className="bg-blue-600 p-1.5 rounded-lg">
-            <span className="text-white font-bold text-lg">K</span>
+            <svg className="w-6 h-6 text-white" viewBox="0 0 100 100" fill="none">
+              <path d="M30 35 C30 25, 70 25, 70 35 C70 45, 30 55, 30 65 C30 75, 70 75, 70 65" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
+            </svg>
           </div>
           <span className="text-white font-bold text-xl tracking-tight">KiemTienNet</span>
         </Link>
@@ -81,7 +83,7 @@ const LoginPage: React.FC = () => {
                 <p className="text-red-500 text-[11px] font-black uppercase tracking-wider mb-2">{error}</p>
                 {showCaptchaGuide && (
                   <div className="text-gray-400 text-[10px] leading-relaxed border-t border-red-500/20 pt-2">
-                    <span className="text-white font-bold">LƯU Ý:</span> Dashboard Supabase của bạn đang bật Captcha. Hãy vào <span className="text-blue-400 font-bold">Authentication -> Auth Settings</span> và <span className="text-red-400 font-bold">Disable CAPTCHA protection</span> để chạy mượt mà trên web.
+                    <span className="text-white font-bold">LƯU Ý:</span> Dashboard Supabase của bạn đang bật Captcha. Hãy vào <span className="text-blue-400 font-bold">Authentication &rarr; Auth Settings</span> và <span className="text-red-400 font-bold">Disable CAPTCHA protection</span> để chạy mượt mà trên web.
                   </div>
                 )}
               </div>

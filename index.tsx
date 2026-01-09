@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 
 /**
- * Khởi tạo ứng dụng với cơ chế tự giải cứu (Safety Net) 7s
+ * Khởi tạo ứng dụng với logic ẩn loading cực mạnh
  */
 const startApplication = () => {
   const rootElement = document.getElementById('root');
@@ -11,15 +11,19 @@ const startApplication = () => {
 
   if (!rootElement) return;
 
-  // HÀM CỨU CÁNH: Sau 7 giây tự động ẩn loading dù có lỗi gì xảy ra
-  const safetyNet = setTimeout(() => {
-    console.warn("Hệ thống phản hồi chậm, đã tự động bỏ qua loading.");
+  const hideOverlay = () => {
     if (overlay) {
       overlay.style.opacity = '0';
       overlay.style.pointerEvents = 'none';
-      setTimeout(() => overlay.remove(), 500);
+      setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 500);
     }
-  }, 7000);
+  };
+
+  // CƠ CHẾ GIẢI CỨU: Sau 5 giây tự động ẩn loading dù có chuyện gì xảy ra
+  const safetyNet = setTimeout(() => {
+    console.warn("Hệ thống khởi động lâu hơn dự kiến, tự động bỏ qua loading.");
+    hideOverlay();
+  }, 5000);
 
   try {
     const root = createRoot(rootElement);
@@ -29,21 +33,21 @@ const startApplication = () => {
       </React.StrictMode>
     );
 
-    // Lắng nghe sự kiện ứng dụng đã sẵn sàng
-    // Trong App.tsx chúng ta cũng sẽ thực hiện việc này khi mount
-    window.addEventListener('load', () => {
+    // Kiểm tra nếu trang đã load xong
+    if (document.readyState === 'complete') {
       clearTimeout(safetyNet);
-      if (overlay) {
-        overlay.style.opacity = '0';
-        overlay.style.pointerEvents = 'none';
-        setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 500);
-      }
-    });
+      hideOverlay();
+    } else {
+      window.addEventListener('load', () => {
+        clearTimeout(safetyNet);
+        hideOverlay();
+      });
+    }
 
   } catch (err) {
-    console.error("Lỗi nghiêm trọng khi khởi tạo React:", err);
+    console.error("Lỗi khởi tạo React:", err);
     clearTimeout(safetyNet);
-    if (overlay) overlay.remove();
+    hideOverlay();
   }
 };
 
