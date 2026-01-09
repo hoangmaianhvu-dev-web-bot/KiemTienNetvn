@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { UserProfile, Announcement } from '../types';
-import { supabase } from '../supabase';
+import { UserProfile, Announcement } from '../types.ts';
+import { supabase } from '../supabase.ts';
 
 interface NavbarProps {
   profile: UserProfile;
@@ -10,7 +10,6 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ profile }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [showNotifs, setShowNotifs] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);

@@ -1,20 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './supabase';
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import Dashboard from './pages/Dashboard';
-import TasksPage from './pages/TasksPage';
-import WithdrawPage from './pages/WithdrawPage';
-import ReferralPage from './pages/ReferralPage';
-import SupportPage from './pages/SupportPage';
-import AdminPage from './pages/AdminPage';
-import ProfilePage from './pages/ProfilePage';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import { UserProfile } from './types';
+import { supabase } from './supabase.ts';
+import LandingPage from './pages/LandingPage.tsx';
+import LoginPage from './pages/LoginPage.tsx';
+import RegisterPage from './pages/RegisterPage.tsx';
+import Dashboard from './pages/Dashboard.tsx';
+import TasksPage from './pages/TasksPage.tsx';
+import WithdrawPage from './pages/WithdrawPage.tsx';
+import ReferralPage from './pages/ReferralPage.tsx';
+import SupportPage from './pages/SupportPage.tsx';
+import AdminPage from './pages/AdminPage.tsx';
+import ProfilePage from './pages/ProfilePage.tsx';
+import Navbar from './components/Navbar.tsx';
+import Footer from './components/Footer.tsx';
+import { UserProfile } from './types.ts';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -46,28 +46,29 @@ const App: React.FC = () => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle(); // maybeSingle doesn't throw if no row found
+        .maybeSingle();
       
       if (error) throw error;
-      
-      if (data) {
-        setProfile(data);
-      } else {
-        // Handle case where auth user exists but profile row doesn't yet
-        console.warn('Profile row not found for user:', userId);
-        setProfile(null);
-      }
+      if (data) setProfile(data);
     } catch (err: any) {
-      console.error('Error fetching profile:', err.message || err);
+      console.error('Fetch error:', err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const refreshProfile = () => {
+    if (session?.user?.id) fetchProfile(session.user.id);
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0b0e14]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex flex-col items-center justify-center h-screen bg-[#0b0e14]">
+        <div className="relative w-16 h-16">
+          <div className="absolute inset-0 rounded-full border-4 border-blue-500/20"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 animate-spin"></div>
+        </div>
+        <p className="mt-6 text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] animate-pulse">KiemTienNet Security...</p>
       </div>
     );
   }
@@ -76,7 +77,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-[#0b0e14]">
         {isAuth && profile && <Navbar profile={profile} />}
         <main className="flex-grow">
           <Routes>
@@ -84,20 +85,17 @@ const App: React.FC = () => {
             <Route path="/login" element={isAuth ? <Navigate to="/dashboard" /> : <LoginPage />} />
             <Route path="/register" element={isAuth ? <Navigate to="/dashboard" /> : <RegisterPage />} />
             
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={isAuth && profile ? <Dashboard profile={profile} /> : (isAuth && !loading ? <Navigate to="/profile" /> : <Navigate to="/login" />)} />
-            <Route path="/tasks" element={isAuth && profile ? <TasksPage profile={profile} /> : <Navigate to="/login" />} />
-            <Route path="/withdraw" element={isAuth && profile ? <WithdrawPage profile={profile} /> : <Navigate to="/login" />} />
+            <Route path="/dashboard" element={isAuth && profile ? <Dashboard profile={profile} /> : <Navigate to="/login" />} />
+            <Route path="/tasks" element={isAuth && profile ? <TasksPage profile={profile} refreshProfile={refreshProfile} /> : <Navigate to="/login" />} />
+            <Route path="/withdraw" element={isAuth && profile ? <WithdrawPage profile={profile} refreshProfile={refreshProfile} /> : <Navigate to="/login" />} />
             <Route path="/referral" element={isAuth && profile ? <ReferralPage profile={profile} /> : <Navigate to="/login" />} />
             <Route path="/support" element={isAuth && profile ? <SupportPage profile={profile} /> : <Navigate to="/login" />} />
             <Route path="/profile" element={isAuth ? <ProfilePage profile={profile} /> : <Navigate to="/login" />} />
-            
-            {/* Admin Routes */}
             <Route path="/admin" element={isAuth && profile?.role === 'admin' ? <AdminPage profile={profile} /> : <Navigate to="/dashboard" />} />
           </Routes>
         </main>
         {!isAuth && <Footer />}
-        {isAuth && <div className="h-16"></div>}
+        {isAuth && <div className="h-20 lg:h-0"></div>}
       </div>
     </Router>
   );
