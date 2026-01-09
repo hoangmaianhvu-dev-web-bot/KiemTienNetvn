@@ -22,7 +22,7 @@
             -moz-osx-font-smoothing: grayscale;
             overflow-x: hidden;
         }
-        /* Màn hình chờ chống đen màn */
+        /* Stylesheet nội bộ quan trọng chống đen màn */
         #loading-overlay {
             position: fixed;
             inset: 0;
@@ -50,18 +50,18 @@
     </style>
 
     <script>
-        // 1. Chặn các lỗi ngầm từ extension/browser
+        // Fix lỗi Network Changed - Tự động reload khi mạng ổn định
+        window.addEventListener('online', function() {
+            console.log('Hệ thống đã kết nối lại. Đang làm mới dữ liệu...');
+            window.location.reload();
+        });
+
+        // Chặn các lỗi message port từ Extension làm gián đoạn React
         window.addEventListener('unhandledrejection', function(event) {
             if (event.reason && (String(event.reason.message || event.reason).includes('message port closed') || String(event.reason.message || event.reason).includes('Extension'))) {
                 event.stopImmediatePropagation();
                 event.preventDefault();
             }
-        });
-
-        // 2. Tự động reload khi có mạng trở lại (Fix lỗi Network Changed)
-        window.addEventListener('online', function() {
-            console.log('Mạng đã khôi phục. Đang tải lại ứng dụng...');
-            window.location.reload();
         });
     </script>
 
@@ -86,7 +86,7 @@
     <div id="loading-overlay">
         <div class="flex flex-col items-center">
             <div class="spinner"></div>
-            <p class="mt-4 text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Khởi tạo bảo mật hệ thống...</p>
+            <p class="mt-4 text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Đang tải cấu hình bảo mật...</p>
         </div>
     </div>
 
