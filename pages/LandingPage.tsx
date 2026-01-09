@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -8,8 +7,10 @@ const LandingPage: React.FC = () => {
       {/* Navbar */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <div className="bg-blue-600 p-1.5 rounded-lg">
-            <span className="text-white font-bold text-lg">K</span>
+          <div className="bg-blue-600 p-1.5 rounded-lg flex items-center justify-center">
+            <svg className="w-6 h-6 text-white" viewBox="0 0 100 100" fill="none">
+              <path d="M30 35 C30 25, 70 25, 70 35 C70 45, 30 55, 30 65 C30 75, 70 75, 70 65" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
+            </svg>
           </div>
           <span className="text-white font-bold text-xl tracking-tight">KiemTienNet</span>
         </div>

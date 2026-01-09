@@ -42,14 +42,20 @@ const LoginPage: React.FC = () => {
           <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-blue-800 rounded-full blur-[150px]"></div>
         </div>
 
-        <Link to="/" className="flex items-center space-x-2 relative z-10">
-          <div className="bg-blue-600 p-1.5 rounded-lg">
-            <svg className="w-6 h-6 text-white" viewBox="0 0 100 100" fill="none">
-              <path d="M30 35 C30 25, 70 25, 70 35 C70 45, 30 55, 30 65 C30 75, 70 75, 70 65" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <span className="text-white font-bold text-xl tracking-tight">KiemTienNet</span>
-        </Link>
+        <div className="flex flex-col gap-4 relative z-10">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="bg-blue-600 p-1.5 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" viewBox="0 0 100 100" fill="none">
+                <path d="M30 35 C30 25, 70 25, 70 35 C70 45, 30 55, 30 65 C30 75, 70 75, 70 65" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <span className="text-white font-bold text-xl tracking-tight">KiemTienNet</span>
+          </Link>
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors w-fit">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Quay lại trang chủ
+          </button>
+        </div>
 
         <div className="relative z-10">
           <h1 className="text-6xl font-black text-white mb-6 leading-tight">Chào mừng <br /><span className="text-blue-500">trở lại.</span></h1>
@@ -64,6 +70,11 @@ const LoginPage: React.FC = () => {
 
       <div className="w-full md:w-1/2 flex flex-col p-8 md:p-20 justify-center">
         <div className="max-w-md w-full mx-auto">
+          <button onClick={() => navigate('/')} className="md:hidden flex items-center gap-2 text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest mb-8 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Quay lại trang chủ
+          </button>
+          
           <h2 className="text-4xl font-bold text-white mb-2">Đăng nhập</h2>
           <p className="text-gray-500 mb-10">Nhập thông tin tài khoản để tiếp tục.</p>
 

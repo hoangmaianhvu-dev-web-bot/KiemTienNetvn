@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UserProfile } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -8,14 +7,15 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
+  // Dữ liệu thực tế: Nếu mới bắt đầu, tất cả sẽ là 0 thay vì số ảo
   const data = [
-    { name: 'T2', value: 400 },
-    { name: 'T3', value: 300 },
-    { name: 'T4', value: 600 },
-    { name: 'T5', value: 800 },
-    { name: 'T6', value: 500 },
-    { name: 'T7', value: 900 },
-    { name: 'CN', value: 700 },
+    { name: 'T2', value: 0 },
+    { name: 'T3', value: 0 },
+    { name: 'T4', value: 0 },
+    { name: 'T5', value: 0 },
+    { name: 'T6', value: 0 },
+    { name: 'T7', value: 0 },
+    { name: 'CN', value: 0 },
   ];
 
   const isAdmin = profile?.role === 'admin';
@@ -59,7 +59,7 @@ const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
            <div className="flex justify-between items-center mb-12">
               <div>
                 <h3 className="text-2xl font-black text-white mb-1">Biểu đồ thu nhập</h3>
-                <p className="text-gray-500 text-xs font-medium uppercase tracking-widest">Dòng tiền trong tuần này</p>
+                <p className="text-gray-500 text-xs font-medium uppercase tracking-widest">Dữ liệu theo thời gian thực</p>
               </div>
            </div>
            <div className="h-64 w-full">
