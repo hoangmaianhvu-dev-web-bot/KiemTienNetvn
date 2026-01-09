@@ -11,6 +11,8 @@
             font-family: 'Inter', sans-serif;
             background-color: #0b0e14;
             color: #ffffff;
+            margin: 0;
+            padding: 0;
         }
         ::-webkit-scrollbar {
             width: 8px;
@@ -39,26 +41,57 @@
   }
 }
 </script>
-</head>
-<body>
-    <div id="root"></div>
-    <script>
-        // Chặn các lỗi vớ vẩn từ Extension gây ra đen màn
+<script>
+    /**
+     * SHIELD: Ngăn chặn các lỗi rác từ Browser Extension (Chrome/Edge)
+     * Những lỗi này thường do các phần mềm như IDM, Grammarly, hoặc VPN can thiệp vào trang web.
+     */
+    (function() {
+        const suppressedErrors = [
+            "message port closed",
+            "message channel closed",
+            "asynchronous response",
+            "extension context invalidated",
+            "Unchecked runtime.lastError"
+        ];
+
+        function isSuppressed(msg) {
+            if (!msg) return false;
+            const text = String(msg).toLowerCase();
+            return suppressedErrors.some(err => text.includes(err.toLowerCase()));
+        }
+
+        // 1. Chặn lỗi unhandledrejection (Promise)
         window.addEventListener('unhandledrejection', function(event) {
-            if (event.reason && event.reason.message === "The message port closed before a response was received.") {
+            const reason = event.reason && (event.reason.message || event.reason);
+            if (isSuppressed(reason)) {
                 event.stopImmediatePropagation();
                 event.preventDefault();
             }
-        });
+        }, true);
 
-        // Fix lỗi "runtime.lastError"
+        // 2. Chặn lỗi window.onerror
+        const originalOnError = window.onerror;
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            if (isSuppressed(msg) || isSuppressed(error?.message)) {
+                return true; // Ngăn chặn báo lỗi lên console
+            }
+            return originalOnError ? originalOnError.apply(this, arguments) : false;
+        };
+
+        // 3. Chặn console.error để tránh làm "bẩn" log của người dùng
         const originalConsoleError = console.error;
         console.error = function(...args) {
-            if (args[0] && typeof args[0] === 'string' && args[0].includes('message port closed')) {
-                return; // Lờ đi lỗi này
+            const msg = args.length > 0 ? String(args[0]) : "";
+            if (isSuppressed(msg)) {
+                return; 
             }
             originalConsoleError.apply(console, args);
         };
-    </script>
+    })();
+</script>
+</head>
+<body>
+    <div id="root"></div>
 </body>
 </html>
