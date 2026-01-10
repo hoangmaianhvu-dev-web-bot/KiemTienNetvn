@@ -15,10 +15,15 @@ export interface Task {
   id: string;
   title: string;
   reward: number;
-  type: 'offer' | 'regular' | 'special' | 'social';
+  type: string;
   description: string;
   url: string;
   icon: string;
+  max_per_day: number;
+  api_url?: string;
+  method?: 'GET' | 'POST';
+  json_key?: string;
+  fallback_url?: string;
   created_at?: string;
 }
 

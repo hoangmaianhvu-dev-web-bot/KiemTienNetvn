@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './supabase.ts';
@@ -19,46 +20,36 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
-    const authTimeout = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn("Auth timeout: Tiếp tục vào web với trạng thái khách.");
-        setLoading(false);
-      }
-    }, 5000);
-
     const initAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         if (error) throw error;
         
         if (mounted) {
-          setSession(session);
-          if (session) {
-            await fetchProfile(session.user.id);
+          setSession(currentSession);
+          if (currentSession) {
+            await fetchProfile(currentSession.user.id);
           } else {
             setLoading(false);
-            clearTimeout(authTimeout);
           }
         }
       } catch (err) {
         console.error("Auth init error:", err);
-        if (mounted) {
-          setLoading(false);
-          clearTimeout(authTimeout);
-        }
+        if (mounted) setLoading(false);
       }
     };
 
     initAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       if (mounted) {
-        setSession(session);
-        if (session) fetchProfile(session.user.id);
+        setSession(currentSession);
+        if (currentSession) fetchProfile(currentSession.user.id);
         else {
           setProfile(null);
           setLoading(false);
@@ -69,11 +60,10 @@ const App: React.FC = () => {
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      clearTimeout(authTimeout);
     };
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, retryCount = 0) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -83,13 +73,17 @@ const App: React.FC = () => {
       
       if (error) throw error;
       
-      // Nếu có session nhưng không có profile, ta vẫn cho setLoading(false)
-      // nhưng LoginPage sẽ xử lý việc tạo profile khi đăng nhập lại
       if (data) {
         setProfile(data);
+        setFetchError(false);
       }
     } catch (err: any) {
       console.error('Profile fetch error:', err.message);
+      if (retryCount < 2) {
+        setTimeout(() => fetchProfile(userId, retryCount + 1), 2000);
+      } else {
+        setFetchError(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -111,7 +105,18 @@ const App: React.FC = () => {
     );
   }
 
-  // SỬA ĐỔI: Nếu có session nhưng chưa có profile row, ta vẫn coi như chưa auth để LoginPage xử lý tạo lại
+  if (fetchError && session) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-[#0b0e14] px-6 text-center">
+        <div className="bg-red-500/10 p-8 rounded-[32px] border border-red-500/20 max-w-md">
+          <h2 className="text-red-500 font-black text-xl mb-4 uppercase">LỖI KẾT NỐI MÁY CHỦ</h2>
+          <p className="text-gray-500 text-sm mb-8 leading-relaxed">Không thể tải dữ liệu hồ sơ. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.</p>
+          <button onClick={() => window.location.reload()} className="w-full bg-red-600 text-white font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest">TẢI LẠI TRANG</button>
+        </div>
+      </div>
+    );
+  }
+
   const isAuth = !!session && !!profile;
 
   return (
