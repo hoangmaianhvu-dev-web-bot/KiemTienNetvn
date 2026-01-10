@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Task, Announcement } from '../types';
 import { supabase } from '../supabase';
@@ -15,6 +14,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Thống kê hệ thống
   const [systemStats, setSystemStats] = useState({
     totalBalance: 0,
     totalEarned: 0,
@@ -26,15 +26,10 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
   const [taskForm, setTaskForm] = useState({ 
     title: '', 
     reward: '', 
-    type: 'regular' as any, 
+    type: 'offer' as any, 
     description: '', 
-    url: 'https://avudev-verifi.blogspot.com/', 
-    icon: '🔗',
-    api_url: '',
-    method: 'GET' as 'GET' | 'POST',
-    json_key: 'shortenedUrl',
-    fallback_url: '',
-    max_per_day: '5'
+    url: '', 
+    icon: '🔗' 
   });
   const [annForm, setAnnForm] = useState({ title: '', content: '' });
 
@@ -64,7 +59,19 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
     try {
       if (activeTab === 'members') {
         const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-        if (data) setMembers(data);
+        if (data) {
+          setMembers(data);
+          const stats = data.reduce((acc: any, curr: any) => {
+            if (curr.role === 'admin') return acc;
+            return {
+              totalBalance: acc.totalBalance + (Number(curr.balance) || 0),
+              totalEarned: acc.totalEarned + (Number(curr.total_earned) || 0),
+              totalTasks: acc.totalTasks + (Number(curr.tasks_completed) || 0),
+              totalMembers: acc.totalMembers + 1
+            };
+          }, { totalBalance: 0, totalEarned: 0, totalTasks: 0, totalMembers: 0 });
+          setSystemStats(stats);
+        }
       } else if (activeTab === 'withdrawals') {
         const { data } = await supabase.from('withdrawals').select('*, profiles(full_name, email)').order('created_at', { ascending: false });
         if (data) setWithdrawals(data);
@@ -77,49 +84,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
       }
     } catch (error) { console.error("Fetch error:", error); }
     setLoading(false);
-  };
-
-  const handleSubmitTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const payload = { 
-      title: taskForm.title, 
-      reward: Number(taskForm.reward), 
-      type: taskForm.type, 
-      description: taskForm.description, 
-      url: taskForm.url, 
-      icon: taskForm.icon,
-      api_url: taskForm.api_url,
-      method: taskForm.method,
-      json_key: taskForm.json_key,
-      fallback_url: taskForm.fallback_url,
-      max_per_day: Number(taskForm.max_per_day)
-    };
-
-    if (editingTaskId) {
-      const { error } = await supabase.from('tasks').update(payload).eq('id', editingTaskId);
-      if (error) alert("Lỗi cập nhật: " + error.message);
-      else {
-        alert("Cập nhật thành công!");
-        resetTaskForm();
-        fetchData();
-      }
-    } else {
-      const { error } = await supabase.from('tasks').insert([payload]);
-      if (error) alert("Lỗi thêm mới: " + error.message);
-      else {
-        alert("Thêm nhiệm vụ thành công!");
-        resetTaskForm();
-        fetchData();
-      }
-    }
-  };
-
-  const resetTaskForm = () => {
-    setEditingTaskId(null);
-    setTaskForm({ 
-      title: '', reward: '', type: 'regular', description: '', url: 'https://avudev-verifi.blogspot.com/', 
-      icon: '🔗', api_url: '', method: 'GET', json_key: 'shortenedUrl', fallback_url: '', max_per_day: '5' 
-    });
   };
 
   const handleUpdateWithdrawal = async (id: string, status: string) => {
@@ -139,19 +103,75 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
       alert('Đã đăng thông báo!');
       setAnnForm({ title: '', content: '' });
       fetchData();
+    } else {
+      alert("Lỗi: " + error.message);
     }
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
     if (!window.confirm('Bạn chắc chắn muốn xóa thông báo này?')) return;
     const { error } = await supabase.from('announcements').delete().eq('id', id);
-    if (!error) fetchData();
+    if (!error) {
+      alert('Đã xóa thông báo!');
+      fetchData();
+    } else {
+      alert("Lỗi: " + error.message);
+    }
   };
 
   const handleDeleteTask = async (id: string) => {
-    if (!window.confirm('Xóa nhiệm vụ này?')) return;
+    if (!window.confirm('Bạn có chắc chắn muốn xóa nhiệm vụ này?')) return;
     const { error } = await supabase.from('tasks').delete().eq('id', id);
-    if (!error) fetchData();
+    if (!error) {
+      alert('Xóa nhiệm vụ thành công!');
+      fetchData();
+    } else {
+      alert("Lỗi khi xóa: " + error.message);
+    }
+  };
+
+  const handleSubmitTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Lọc bỏ ID để tránh xung đột khi insert
+    const { title, reward, type, description, url, icon } = taskForm;
+    const payload = { 
+      title, 
+      reward: Number(reward), 
+      type, 
+      description, 
+      url, 
+      icon 
+    };
+
+    if (editingTaskId) {
+      const { error } = await supabase.from('tasks').update(payload).eq('id', editingTaskId);
+      if (error) {
+        alert("Lỗi cập nhật: " + error.message);
+      } else {
+        alert("Cập nhật nhiệm vụ thành công!");
+        setEditingTaskId(null);
+        setTaskForm({ title: '', reward: '', type: 'offer', description: '', url: '', icon: '🔗' });
+        fetchData();
+      }
+    } else {
+      const { error } = await supabase.from('tasks').insert([payload]);
+      if (error) {
+        alert("Lỗi thêm mới: " + error.message);
+      } else {
+        alert("Thêm nhiệm vụ thành công!");
+        setTaskForm({ title: '', reward: '', type: 'offer', description: '', url: '', icon: '🔗' });
+        fetchData();
+      }
+    }
+  };
+
+  const handleAddTestMoney = async () => {
+    const { error } = await supabase.from('profiles').update({ balance: 999999999, role: 'admin' }).eq('id', profile.id);
+    if (!error) {
+      alert('Đã kích hoạt quyền năng tối cao cho Admin!');
+      window.location.reload();
+    }
   };
 
   return (
@@ -159,7 +179,10 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div>
           <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2">🛡️ HỆ THỐNG QUẢN TRỊ</p>
-          <h1 className="text-4xl font-black text-white tracking-tight">Quản lý <span className="text-gray-500">Hệ thống</span></h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl font-black text-white tracking-tight">Quản lý <span className="text-gray-500">KiemTienNet</span></h1>
+            <button onClick={handleAddTestMoney} className="bg-blue-500/10 text-blue-500 border border-blue-500/20 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-blue-500 hover:text-white transition-all">BOM TIỀN ADMIN</button>
+          </div>
         </div>
         <div className="bg-[#151a24] p-1.5 rounded-[20px] border border-gray-800 flex shadow-2xl overflow-x-auto scrollbar-hide">
            {['members', 'withdrawals', 'tasks', 'announcements'].map((tab) => (
@@ -167,7 +190,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
                 key={tab}
                 onClick={() => setActiveTab(tab as any)} 
                 className={`px-8 py-3.5 rounded-[16px] text-[11px] font-black whitespace-nowrap transition-all ${
-                  activeTab === tab ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-gray-500 hover:text-white'
+                  activeTab === tab 
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                  : 'text-gray-500 hover:text-white'
                 }`}
              >
                {tab === 'members' ? 'THÀNH VIÊN' : tab === 'withdrawals' ? 'LỆNH RÚT' : tab === 'tasks' ? 'NHIỆM VỤ' : 'THÔNG BÁO'}
@@ -194,43 +219,57 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
       </div>
 
       {loading ? (
-        <div className="text-center py-20 text-gray-700 font-bold uppercase text-[10px] tracking-widest animate-pulse">Đang tải...</div>
+        <div className="text-center py-20 text-gray-700 font-bold uppercase text-[10px] tracking-widest animate-pulse">Đang truy xuất database...</div>
       ) : (
         <>
+          {activeTab === 'announcements' && (
+            <div className="grid lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
+              <div className="lg:col-span-1">
+                <div className="bg-[#151a24] p-8 rounded-[32px] border border-gray-800 shadow-xl">
+                  <h3 className="text-xl font-bold text-white mb-6 uppercase tracking-tight">Tạo bảng tin mới</h3>
+                  <form onSubmit={handleCreateAnnouncement} className="space-y-4">
+                    <input type="text" value={annForm.title} onChange={e => setAnnForm({...annForm, title: e.target.value})} placeholder="Tiêu đề..." className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none" />
+                    <textarea value={annForm.content} onChange={e => setAnnForm({...annForm, content: e.target.value})} placeholder="Nội dung..." className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm h-40 focus:border-blue-500 outline-none"></textarea>
+                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-colors">PHÁT HÀNH</button>
+                  </form>
+                </div>
+              </div>
+              <div className="lg:col-span-2 space-y-4">
+                {announcements.map(ann => (
+                  <div key={ann.id} className="bg-[#151a24] p-6 rounded-3xl border border-gray-800 flex justify-between items-start group hover:border-gray-700 transition-all">
+                    <div>
+                      <h4 className="text-white font-bold mb-2">{ann.title}</h4>
+                      <p className="text-gray-500 text-sm whitespace-pre-wrap leading-relaxed">{ann.content}</p>
+                    </div>
+                    <button onClick={() => handleDeleteAnnouncement(ann.id)} className="text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-all font-black text-[10px] uppercase hover:underline">Xóa thông báo</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'tasks' && (
             <div className="grid lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
               <div className="lg:col-span-1">
                 <div className="bg-[#151a24] p-8 rounded-[32px] border border-gray-800 sticky top-24 shadow-xl">
-                  <h3 className="text-xl font-bold text-white uppercase mb-6">{editingTaskId ? 'Cập nhật' : 'Thêm'} nhiệm vụ</h3>
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-white uppercase tracking-tight">{editingTaskId ? 'Cập nhật' : 'Thêm'} nhiệm vụ</h3>
+                    {editingTaskId && <button onClick={() => { setEditingTaskId(null); setTaskForm({ title: '', reward: '', type: 'offer', description: '', url: '', icon: '🔗' }); }} className="text-[10px] font-black text-gray-500 hover:text-white uppercase">Hủy sửa</button>}
+                  </div>
                   <form onSubmit={handleSubmitTask} className="space-y-4">
-                    <div>
-                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Cơ bản</label>
-                      <input type="text" required value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} placeholder="Tên nhiệm vụ" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none mb-3" />
-                      <div className="grid grid-cols-2 gap-3">
-                        <input type="number" required value={taskForm.reward} onChange={e => setTaskForm({...taskForm, reward: e.target.value})} placeholder="Thưởng (VNĐ)" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none" />
-                        <input type="number" required value={taskForm.max_per_day} onChange={e => setTaskForm({...taskForm, max_per_day: e.target.value})} placeholder="Giới hạn/ngày" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none" />
-                      </div>
+                    <input type="text" required value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} placeholder="Tên nhiệm vụ" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <input type="number" required value={taskForm.reward} onChange={e => setTaskForm({...taskForm, reward: e.target.value})} placeholder="Thưởng (VNĐ)" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none" />
+                      <select value={taskForm.type} onChange={e => setTaskForm({...taskForm, type: e.target.value as any})} className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none">
+                        <option value="offer">Ưu đãi</option>
+                        <option value="regular">Thường</option>
+                        <option value="special">Đặc biệt</option>
+                        <option value="social">Mạng xã hội</option>
+                      </select>
                     </div>
-
-                    <div>
-                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Cấu hình API Rút gọn</label>
-                      <input type="text" value={taskForm.api_url} onChange={e => setTaskForm({...taskForm, api_url: e.target.value})} placeholder="API Endpoint Url" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-[11px] focus:border-blue-500 outline-none mb-3" />
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        <select value={taskForm.method} onChange={e => setTaskForm({...taskForm, method: e.target.value as any})} className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm outline-none">
-                          <option value="GET">GET</option>
-                          <option value="POST">POST</option>
-                        </select>
-                        <input type="text" value={taskForm.json_key} onChange={e => setTaskForm({...taskForm, json_key: e.target.value})} placeholder="JSON Key (e.g. url)" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm outline-none" />
-                      </div>
-                      <input type="text" value={taskForm.fallback_url} onChange={e => setTaskForm({...taskForm, fallback_url: e.target.value})} placeholder="Link dự phòng (Fallback)" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-[11px] outline-none" />
-                    </div>
-
-                    <textarea required value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} placeholder="Hướng dẫn làm nhiệm vụ..." className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm h-24 focus:border-blue-500 outline-none"></textarea>
-                    
-                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-blue-900/20">
-                      {editingTaskId ? 'CẬP NHẬT NHIỆM VỤ' : 'THÊM NHIỆM VỤ MỚI'}
-                    </button>
-                    {editingTaskId && <button type="button" onClick={resetTaskForm} className="w-full text-gray-500 text-[10px] font-black uppercase mt-2">Hủy chỉnh sửa</button>}
+                    <input type="text" required value={taskForm.url} onChange={e => setTaskForm({...taskForm, url: e.target.value})} placeholder="Đường dẫn" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none" />
+                    <textarea required value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} placeholder="Hướng dẫn..." className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm h-24 focus:border-blue-500 outline-none"></textarea>
+                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-blue-900/20">{editingTaskId ? 'CẬP NHẬT' : 'PHÊ DUYỆT'}</button>
                   </form>
                 </div>
               </div>
@@ -241,35 +280,44 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
                         <div className="bg-gray-900 w-14 h-14 flex items-center justify-center rounded-2xl text-2xl border border-gray-800">{t.icon || '🔗'}</div>
                         <div>
                           <h4 className="text-white font-bold">{t.title}</h4>
-                          <div className="flex gap-3 items-center mt-1">
-                            <p className="text-blue-500 font-black text-sm">+{Number(t.reward).toLocaleString()}đ</p>
-                            <span className="text-gray-700 text-[10px] font-black uppercase">Giới hạn: {t.max_per_day}/ngày</span>
-                          </div>
+                          <p className="text-blue-500 font-black text-sm">+{Number(t.reward).toLocaleString()}đ - <span className="text-gray-600 text-[10px] uppercase">{t.type}</span></p>
                         </div>
                       </div>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                        <button onClick={() => { setEditingTaskId(t.id); setTaskForm({...t as any, reward: t.reward.toString(), max_per_day: t.max_per_day.toString()}); }} className="bg-blue-600/10 text-blue-500 px-4 py-2 rounded-xl font-black text-[10px] uppercase hover:bg-blue-600 hover:text-white">Sửa</button>
-                        <button onClick={() => handleDeleteTask(t.id)} className="bg-red-600/10 text-red-500 px-4 py-2 rounded-xl font-black text-[10px] uppercase hover:bg-red-600 hover:text-white">Xóa</button>
+                        <button onClick={() => { setEditingTaskId(t.id); setTaskForm({...t, reward: t.reward.toString()}); }} className="bg-blue-600/10 text-blue-500 px-4 py-2 rounded-xl font-black text-[10px] uppercase">Sửa</button>
+                        <button onClick={() => handleDeleteTask(t.id)} className="bg-red-600/10 text-red-500 px-4 py-2 rounded-xl font-black text-[10px] uppercase">Xóa</button>
                       </div>
                    </div>
                  ))}
+                 {tasks.length === 0 && <div className="text-center py-10 text-gray-600">Chưa có nhiệm vụ nào</div>}
               </div>
             </div>
           )}
 
-          {activeTab === 'withdrawals' && (
+          {(activeTab === 'members' || activeTab === 'withdrawals') && (
             <div className="bg-[#151a24] rounded-[48px] border border-gray-800 overflow-hidden shadow-2xl animate-in fade-in duration-500">
-               <div className="p-10 overflow-x-auto">
+              <div className="p-10 overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-gray-800">
-                      <th className="pb-8 text-gray-500 text-[10px] font-black uppercase tracking-widest">Tên & Số tiền</th>
+                      <th className="pb-8 text-gray-500 text-[10px] font-black uppercase tracking-widest">{activeTab === 'members' ? 'Người dùng' : 'Tên & Số tiền'}</th>
                       <th className="pb-8 text-gray-500 text-[10px] font-black uppercase tracking-widest">Trạng thái</th>
                       <th className="pb-8 text-gray-500 text-[10px] font-black uppercase tracking-widest text-right">Quản lý</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {withdrawals.map(w => (
+                    {activeTab === 'members' ? members.map(m => (
+                      <tr key={m.id} className="border-b border-gray-800/50 hover:bg-white/[0.02] transition-colors">
+                        <td className="py-6">
+                          <p className="text-white font-bold">{m.full_name}</p>
+                          <p className="text-blue-500 font-black text-sm">{m.balance?.toLocaleString()}đ</p>
+                        </td>
+                        <td className="py-6"><span className={`px-4 py-1.5 rounded-full text-[8px] font-black tracking-widest ${m.role === 'admin' ? 'bg-red-500 text-white' : 'bg-gray-800 text-gray-500'}`}>{m.role.toUpperCase()}</span></td>
+                        <td className="py-6 text-right">
+                           <button className="text-gray-700 hover:text-white transition-colors">⋮</button>
+                        </td>
+                      </tr>
+                    )) : withdrawals.map(w => (
                       <tr key={w.id} className="border-b border-gray-800/50 hover:bg-white/[0.02] transition-colors">
                         <td className="py-6">
                           <p className="text-white font-bold">{w.profiles?.full_name}</p>
@@ -295,60 +343,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
                     ))}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'members' && (
-            <div className="bg-[#151a24] rounded-[48px] border border-gray-800 overflow-hidden shadow-2xl animate-in fade-in duration-500">
-              <div className="p-10 overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-gray-800">
-                      <th className="pb-8 text-gray-500 text-[10px] font-black uppercase tracking-widest">Người dùng</th>
-                      <th className="pb-8 text-gray-500 text-[10px] font-black uppercase tracking-widest">Vai trò</th>
-                      <th className="pb-8 text-gray-500 text-[10px] font-black uppercase tracking-widest text-right">Số dư</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {members.map(m => (
-                      <tr key={m.id} className="border-b border-gray-800/50 hover:bg-white/[0.02] transition-colors">
-                        <td className="py-6">
-                          <p className="text-white font-bold">{m.full_name}</p>
-                          <p className="text-gray-600 text-[10px] font-mono">{m.email}</p>
-                        </td>
-                        <td className="py-6"><span className={`px-4 py-1.5 rounded-full text-[8px] font-black tracking-widest uppercase ${m.role === 'admin' ? 'bg-red-500/10 text-red-500' : 'bg-gray-800 text-gray-500'}`}>{m.role}</span></td>
-                        <td className="py-6 text-right font-black text-blue-500">{m.balance?.toLocaleString()}đ</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'announcements' && (
-            <div className="grid lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
-              <div className="lg:col-span-1">
-                <div className="bg-[#151a24] p-8 rounded-[32px] border border-gray-800 shadow-xl">
-                  <h3 className="text-xl font-bold text-white mb-6 uppercase tracking-tight">Tạo bảng tin mới</h3>
-                  <form onSubmit={handleCreateAnnouncement} className="space-y-4">
-                    <input type="text" value={annForm.title} onChange={e => setAnnForm({...annForm, title: e.target.value})} placeholder="Tiêu đề..." className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none" />
-                    <textarea value={annForm.content} onChange={e => setAnnForm({...annForm, content: e.target.value})} placeholder="Nội dung..." className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-white text-sm h-40 focus:border-blue-500 outline-none"></textarea>
-                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-colors">PHÁT HÀNH</button>
-                  </form>
-                </div>
-              </div>
-              <div className="lg:col-span-2 space-y-4">
-                {announcements.map(ann => (
-                  <div key={ann.id} className="bg-[#151a24] p-6 rounded-3xl border border-gray-800 flex justify-between items-start group hover:border-gray-700 transition-all">
-                    <div>
-                      <h4 className="text-white font-bold mb-2">{ann.title}</h4>
-                      <p className="text-gray-500 text-sm whitespace-pre-wrap leading-relaxed">{ann.content}</p>
-                    </div>
-                    <button onClick={() => handleDeleteAnnouncement(ann.id)} className="text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-all font-black text-[10px] uppercase hover:underline">Xóa</button>
-                  </div>
-                ))}
               </div>
             </div>
           )}

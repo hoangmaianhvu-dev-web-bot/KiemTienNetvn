@@ -17,13 +17,8 @@ export interface Task {
   reward: number;
   type: 'offer' | 'regular' | 'special' | 'social';
   description: string;
-  url: string; // Link đích
+  url: string;
   icon: string;
-  api_url?: string;
-  method?: 'GET' | 'POST';
-  json_key?: string;
-  fallback_url?: string;
-  max_per_day: number;
   created_at?: string;
 }
 
