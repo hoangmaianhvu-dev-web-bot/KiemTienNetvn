@@ -7,19 +7,6 @@ interface AdminPageProps {
   profile: UserProfile;
 }
 
-const REAL_10_TASKS = [
-  { title: 'Nhiệm vụ 1 (Link4m)', reward: 200, max_per_day: 2, type: 'ƯU ĐÃI', icon: '💎', api_url: 'https://link4m.co/api-shorten/v2?api=68208afab6b8fc60542289b6&url=', method: 'GET', json_key: 'shortenedUrl', url: 'https://avudev-verifi.blogspot.com/', description: 'NGUỒN: LINK4M' },
-  { title: 'Nhiệm vụ 2 (YeuMoney)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🔗', api_url: 'https://yeumoney.com/QL_api.php?token=2103f2aa67d874c161e5f4388b2312af6d43742734a8ea41716b8a2cc94b7b02&format=json&url=', method: 'GET', json_key: 'shortenedUrl', url: 'https://avudev-verifi.blogspot.com/', description: 'NGUỒN: YEUMONEY' },
-  { title: 'Nhiệm vụ 3 (Linktot)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🔗', api_url: 'https://linktot.net/JSON_QL_API.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=', method: 'GET', json_key: 'url', url: 'https://avudev-verifi.blogspot.com/', description: 'NGUỒN: LINKTOT' },
-  { title: 'Nhiệm vụ 4 (4mmo)', reward: 200, max_per_day: 2, type: 'ĐẶC BIỆT', icon: '🔥', api_url: 'https://4mmo.net/api?api=e60502497c3ce642ca2e4d57515bd294ae0d8d93&url=', method: 'GET', json_key: 'shortenedUrl', url: 'https://avudev-verifi.blogspot.com/', description: 'NGUỒN: 4MMO' },
-  { title: 'Nhiệm vụ 5 (Xlink)', reward: 200, max_per_day: 2, type: 'MXH', icon: '📱', api_url: 'https://xlink.co/api?token=ac55663f-ef85-4849-8ce1-4ca99bd57ce7&url=', method: 'GET', json_key: 'url', url: 'https://avudev-verifi.blogspot.com/', description: 'NGUỒN: XLINK' },
-  { title: 'Nhiệm vụ 6 (Linkngon)', reward: 200, max_per_day: 5, type: 'THƯỜNG', icon: '🔗', api_url: 'https://linkngon.io/api?api=5PA5LNPwgcjiVhyRYRhPjam8jGNHpGgELAEPfZH6QzWiBk&url=', method: 'GET', json_key: 'url', url: 'https://avudev-verifi.blogspot.com/', description: 'NGUỒN: LINKNGON' },
-  { title: 'Nhiệm vụ 7 (TrafficTot)', reward: 200, max_per_day: 3, type: 'ĐẶC BIỆT', icon: '🚀', api_url: 'https://services.traffictot.com/api/v1/shorten?api_key=8ddd0436120826a3a1afd7cc4275827af4edead951fb5ec5f7dafd03ccdc95f7', method: 'POST', json_key: 'shortenedUrl', url: 'https://avudev-verifi.blogspot.com/', description: 'NGUỒN: TRAFFICTOT' },
-  { title: 'Nhiệm vụ 8 (Kiemtienngay)', reward: 200, max_per_day: 2, type: 'MXH', icon: '📱', api_url: 'https://kiemtienngay.com/apiv1?api=bdce14c14722165a01a9c8225d88abc6&url=', method: 'GET', json_key: 'shortenedUrl', url: 'https://avudev-verifi.blogspot.com/', description: 'NGUỒN: KIEMTIENNGAY' },
-  { title: 'Nhiệm vụ 9 (Layma)', reward: 200, max_per_day: 2, type: 'ƯU ĐÃI', icon: '💎', api_url: 'https://api.layma.net/api/admin/shortlink/quicklink?tokenUser=f4b53bc4126c32ec5b7211a7430ba898&format=json&url=', method: 'GET', json_key: 'shortenedUrl', url: 'https://avudev-verifi.blogspot.com/', description: 'NGUỒN: LAYMA' },
-  { title: 'Nhiệm vụ 10 (Yeulink)', reward: 200, max_per_day: 4, type: 'THƯỜNG', icon: '🔗', api_url: 'https://yeulink.com/api?token=a7b730f5-4fff-4b47-8ae2-c05afb3754a3&url=', method: 'GET', json_key: 'shortenedUrl', url: 'https://avudev-verifi.blogspot.com/', description: 'NGUỒN: YEULINK' },
-];
-
 const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
   const [activeTab, setActiveTab] = useState<'members' | 'withdrawals' | 'tasks' | 'announcements'>('members');
   const [members, setMembers] = useState<UserProfile[]>([]);
@@ -89,7 +76,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
         ...newTask,
         reward: Number(newTask.reward),
         max_per_day: Number(newTask.max_per_day),
-        description: newTask.description || `NGUỒN: ${newTask.type}`
+        description: newTask.description || newTask.title.split('(')[1]?.split(')')[0] || 'SOURCE'
       }]);
       if (error) throw error;
       alert("Nhiệm vụ đã được phê duyệt!");
@@ -97,6 +84,18 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
       fetchData();
     } catch (err: any) { alert("Lỗi: " + err.message); }
     finally { setLoading(false); }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa vĩnh viễn nhiệm vụ này không?")) return;
+    try {
+      const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+      if (error) throw error;
+      alert("Đã xóa nhiệm vụ!");
+      fetchData();
+    } catch (err: any) {
+      alert("Lỗi khi xóa: " + err.message);
+    }
   };
 
   const handleCreateAnn = async () => {
@@ -109,36 +108,37 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
     } catch (e) {}
   };
 
-  const handleActionWithdrawal = async (id: string, status: 'completed' | 'rejected') => {
+  const handleDeleteAnnouncement = async (annId: string) => {
+    if (!window.confirm("Xóa thông báo này vĩnh viễn?")) return;
     try {
-      await supabase.from('withdrawals').update({ status }).eq('id', id);
-      alert("Đã cập nhật trạng thái lệnh rút!");
+      const { error } = await supabase.from('announcements').delete().eq('id', annId);
+      if (error) throw error;
+      alert("Đã xóa thông báo!");
       fetchData();
     } catch (e) {}
   };
 
-  const handleResetTo10Tasks = async () => {
-    if (!window.confirm("Xóa tất cả nhiệm vụ hiện tại và nạp 10 nhiệm vụ rút gọn link chuẩn?")) return;
-    setLoading(true);
+  const handleClearAllAnnouncements = async () => {
+    if (!window.confirm("Xóa TẤT CẢ thông báo hệ thống? Thao tác này không thể hoàn tác!")) return;
     try {
-      await supabase.from('tasks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      const { error } = await supabase.from('tasks').insert(REAL_10_TASKS);
+      const { error } = await supabase.from('announcements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       if (error) throw error;
-      alert("Đã nạp 10 nhiệm vụ thành công!");
+      alert("Đã xóa toàn bộ thông báo!");
       fetchData();
-    } catch (err: any) { alert("Lỗi: " + err.message); }
-    finally { setLoading(false); }
+    } catch (e) {}
   };
 
-  const handleDeleteTask = async (id: string) => {
-    if (!window.confirm("Xóa nhiệm vụ này?")) return;
-    await supabase.from('tasks').delete().eq('id', id);
-    fetchData();
+  const handleActionWithdrawal = async (id: string, status: 'completed' | 'rejected') => {
+    try {
+      const { error } = await supabase.from('withdrawals').update({ status }).eq('id', id);
+      if (error) throw error;
+      alert("Đã cập nhật lệnh rút!");
+      fetchData();
+    } catch (e) {}
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Header Giống Ảnh */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div className="flex flex-col gap-2">
           <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
@@ -152,7 +152,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
           </div>
         </div>
 
-        {/* Tab Menu Giống Ảnh */}
         <div className="bg-[#151a24] p-1.5 rounded-[22px] border border-gray-800 flex shadow-2xl overflow-x-auto scrollbar-hide">
            {[
              { id: 'members', label: 'THÀNH VIÊN' },
@@ -173,7 +172,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
         </div>
       </div>
 
-      {/* Stats Cards Giống Ảnh */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {[
           { label: 'TỔNG SỐ DƯ USER', value: `${systemStats.totalBalance.toLocaleString()}đ`, icon: '💰', color: 'text-blue-500', iconBg: 'bg-blue-500/10' },
@@ -190,79 +188,8 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
       </div>
 
       <div className="bg-[#151a24] rounded-[48px] border border-gray-800 shadow-2xl overflow-hidden min-h-[600px]">
-        {activeTab === 'members' && (
-          <div className="p-10 overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest pl-4">NGƯỜI DÙNG</th>
-                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest text-center">LOẠI</th>
-                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest text-right pr-4">SỐ DƯ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map(m => (
-                  <tr key={m.id} className="border-b border-gray-800/30 hover:bg-white/[0.01] transition-colors group">
-                    <td className="py-8 pl-4">
-                      <p className="text-white font-black text-sm">{m.full_name}</p>
-                      <p className="text-gray-600 text-[10px] mt-1">{m.email}</p>
-                    </td>
-                    <td className="py-8 text-center">
-                      <span className={`px-5 py-2 rounded-full text-[9px] font-black tracking-widest uppercase ${m.role === 'admin' ? 'bg-[#ef4444] text-white' : 'bg-gray-800 text-gray-500'}`}>
-                        {m.role === 'admin' ? 'ADMIN' : 'USER'}
-                      </span>
-                    </td>
-                    <td className="py-8 text-right pr-4">
-                      <p className="text-blue-500 font-black text-sm">{m.balance?.toLocaleString()}đ</p>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {activeTab === 'withdrawals' && (
-          <div className="p-10 overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest pl-4">THÔNG TIN RÚT</th>
-                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest text-center">TRẠNG THÁI</th>
-                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest text-right pr-4">HÀNH ĐỘNG</th>
-                </tr>
-              </thead>
-              <tbody>
-                {withdrawals.map(w => (
-                  <tr key={w.id} className="border-b border-gray-800/30">
-                    <td className="py-6 pl-4">
-                      <p className="text-white font-black text-sm">{w.profiles?.full_name}</p>
-                      <p className="text-blue-500 font-black text-xs">{w.amount?.toLocaleString()}đ - {w.method?.toUpperCase()}</p>
-                      <p className="text-gray-600 text-[10px] mt-1">{w.bank_name}: {w.account_number}</p>
-                    </td>
-                    <td className="py-6 text-center">
-                      <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase ${w.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : w.status === 'completed' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                        {w.status === 'pending' ? 'CHỜ DUYỆT' : w.status === 'completed' ? 'THÀNH CÔNG' : 'ĐÃ HỦY'}
-                      </span>
-                    </td>
-                    <td className="py-6 text-right pr-4">
-                      {w.status === 'pending' && (
-                        <div className="flex gap-2 justify-end">
-                          <button onClick={() => handleActionWithdrawal(w.id, 'completed')} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-[8px] font-black">DUYỆT</button>
-                          <button onClick={() => handleActionWithdrawal(w.id, 'rejected')} className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-[8px] font-black">HỦY</button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {activeTab === 'tasks' && (
+        {activeTab === 'tasks' ? (
           <div className="p-10 grid lg:grid-cols-12 gap-10">
-            {/* Form Thêm Nhiệm Vụ Đúng Ảnh Mẫu */}
             <div className="lg:col-span-4">
               <div className="bg-[#0b0e14] p-10 rounded-[40px] border border-gray-800 shadow-2xl">
                 <h3 className="text-white font-black text-2xl mb-12 uppercase tracking-tighter">THÊM NHIỆM VỤ</h3>
@@ -298,13 +225,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
                       className="w-full bg-[#151a24] border border-gray-800 rounded-[20px] p-6 text-sm text-white focus:border-blue-500 outline-none placeholder-gray-600" 
                     />
                     <input 
-                      type="text" placeholder="Icon (Emoji)" 
+                      type="text" placeholder="Icon Emoji" 
                       value={newTask.icon} onChange={(e) => setNewTask({...newTask, icon: e.target.value})}
                       className="w-full bg-[#151a24] border border-gray-800 rounded-[20px] p-6 text-sm text-white focus:border-blue-500 outline-none text-center" 
                     />
                   </div>
                   <input 
-                    type="text" placeholder="Đường dẫn đích" 
+                    type="text" placeholder="Đường dẫn" 
                     value={newTask.url} onChange={(e) => setNewTask({...newTask, url: e.target.value})}
                     className="w-full bg-[#151a24] border border-gray-800 rounded-[20px] p-6 text-sm text-white focus:border-blue-500 outline-none placeholder-gray-600" 
                   />
@@ -319,58 +246,151 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
                   >
                     PHÊ DUYỆT
                   </button>
-                  <button 
-                    onClick={handleResetTo10Tasks} 
-                    className="w-full bg-gray-800/30 hover:bg-gray-800 text-gray-600 font-black py-4 rounded-[20px] uppercase text-[9px] tracking-[0.1em] transition-all"
-                  >
-                    CÀI LẠI 10 NHIỆM VỤ MẪU
-                  </button>
                 </div>
               </div>
             </div>
 
             <div className="lg:col-span-8 space-y-4 max-h-[800px] overflow-y-auto pr-2 scrollbar-hide">
+               {tasks.length === 0 && <p className="text-gray-500 text-center py-10 font-bold">Chưa có nhiệm vụ tùy chỉnh.</p>}
                {tasks.map(t => (
                  <div key={t.id} className="bg-[#0b0e14] p-8 rounded-[32px] border border-gray-800 flex justify-between items-center group hover:border-blue-500/20 transition-all">
                     <div className="flex items-center gap-6">
                       <div className="w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center text-xl text-gray-500 border border-gray-800">{t.icon}</div>
                       <div>
                         <h4 className="text-white font-black text-lg tracking-tight">{t.title}</h4>
-                        <p className="text-blue-500 font-black text-sm">+{t.reward.toLocaleString()}đ <span className="text-gray-700 text-[10px] uppercase ml-2 tracking-widest">- {t.type} | Max: {t.max_per_day}</span></p>
+                        <p className="text-blue-500 font-black text-sm">+{t.reward.toLocaleString()}đ <span className="text-gray-700 text-[10px] uppercase ml-2 tracking-widest">- {t.description} | Max: {t.max_per_day}</span></p>
                       </div>
                     </div>
-                    <button onClick={() => handleDeleteTask(t.id)} className="text-red-900 font-black text-[10px] uppercase tracking-widest hover:text-red-500 transition-colors">XÓA</button>
+                    <button 
+                      onClick={() => handleDeleteTask(t.id)}
+                      className="p-3 bg-red-900/10 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-lg"
+                      title="Xóa nhiệm vụ"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                  </div>
                ))}
             </div>
           </div>
-        )}
-
-        {activeTab === 'announcements' && (
-          <div className="p-10 max-w-2xl mx-auto">
-             <h3 className="text-white font-black text-2xl mb-12 uppercase tracking-tighter">PHÁT HÀNH THÔNG BÁO</h3>
-             <div className="space-y-6">
-                <input 
-                  type="text" placeholder="Tiêu đề thông báo..." 
-                  value={newAnn.title} onChange={(e) => setNewAnn({...newAnn, title: e.target.value})}
-                  className="w-full bg-[#0b0e14] border border-gray-800 rounded-[24px] p-6 text-sm text-white outline-none focus:border-blue-500 transition-all" 
-                />
-                <textarea 
-                  placeholder="Nội dung thông báo..." 
-                  value={newAnn.content} onChange={(e) => setNewAnn({...newAnn, content: e.target.value})}
-                  className="w-full bg-[#0b0e14] border border-gray-800 rounded-[24px] p-6 text-sm text-white h-48 outline-none focus:border-blue-500 transition-all resize-none"
-                ></textarea>
-                <button onClick={handleCreateAnn} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-6 rounded-[24px] uppercase text-[12px] tracking-[0.2em] shadow-2xl transition-all">PHÁT HÀNH NGAY</button>
+        ) : activeTab === 'members' ? (
+          <div className="p-10 overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-800">
+                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest pl-4">NGƯỜI DÙNG</th>
+                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest text-center">LOẠI</th>
+                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest text-right pr-4">SỐ DƯ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members.map(m => (
+                  <tr key={m.id} className="border-b border-gray-800/30 hover:bg-white/[0.01] transition-colors group">
+                    <td className="py-8 pl-4">
+                      <p className="text-white font-black text-sm">{m.full_name}</p>
+                      <p className="text-gray-600 text-[10px] mt-1">{m.email}</p>
+                    </td>
+                    <td className="py-8 text-center">
+                      <span className={`px-5 py-2 rounded-full text-[9px] font-black tracking-widest uppercase ${m.role === 'admin' ? 'bg-[#ef4444] text-white' : 'bg-gray-800 text-gray-500'}`}>
+                        {m.role === 'admin' ? 'ADMIN' : 'USER'}
+                      </span>
+                    </td>
+                    <td className="py-8 text-right pr-4">
+                      <p className="text-blue-500 font-black text-sm">{m.balance?.toLocaleString()}đ</p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : activeTab === 'withdrawals' ? (
+          <div className="p-10 overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-800">
+                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest pl-4">THÔNG TIN RÚT</th>
+                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest text-center">TRẠNG THÁI</th>
+                  <th className="pb-8 text-gray-700 text-[10px] font-black uppercase tracking-widest text-right pr-4">HÀNH ĐỘNG</th>
+                </tr>
+              </thead>
+              <tbody>
+                {withdrawals.map(w => (
+                  <tr key={w.id} className="border-b border-gray-800/30">
+                    <td className="py-6 pl-4">
+                      <p className="text-white font-black text-sm">{w.profiles?.full_name}</p>
+                      <p className="text-blue-500 font-black text-xs">{w.amount?.toLocaleString()}đ - {w.method?.toUpperCase()}</p>
+                      <p className="text-gray-600 text-[10px] mt-1">{w.bank_name}: {w.account_number}</p>
+                    </td>
+                    <td className="py-6 text-center">
+                      <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase ${w.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : w.status === 'completed' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                        {w.status === 'pending' ? 'CHỜ DUYỆT' : w.status === 'completed' ? 'THÀNH CÔNG' : 'ĐÃ HỦY'}
+                      </span>
+                    </td>
+                    <td className="py-6 text-right pr-4">
+                      {w.status === 'pending' && (
+                        <div className="flex gap-2 justify-end">
+                          <button onClick={() => handleActionWithdrawal(w.id, 'completed')} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-[8px] font-black">DUYỆT</button>
+                          <button onClick={() => handleActionWithdrawal(w.id, 'rejected')} className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-[8px] font-black">HỦY</button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-10 max-w-4xl mx-auto">
+             <div className="flex justify-between items-center mb-12">
+                <h3 className="text-white font-black text-2xl uppercase tracking-tighter">QUẢN LÝ THÔNG BÁO</h3>
+                <button 
+                  onClick={handleClearAllAnnouncements}
+                  className="bg-red-600/10 text-red-500 border border-red-500/20 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
+                >
+                  XÓA TẤT CẢ THÔNG BÁO
+                </button>
              </div>
 
-             <div className="mt-16 space-y-4">
-                <h4 className="text-gray-700 text-[10px] font-black uppercase tracking-widest mb-6">LỊCH SỬ THÔNG BÁO</h4>
+             <div className="bg-[#0b0e14] p-10 rounded-[40px] border border-gray-800 shadow-2xl mb-16">
+               <div className="space-y-6">
+                  <input 
+                    type="text" placeholder="Tiêu đề thông báo..." 
+                    value={newAnn.title} onChange={(e) => setNewAnn({...newAnn, title: e.target.value})}
+                    className="w-full bg-[#151a24] border border-gray-800 rounded-[24px] p-6 text-sm text-white outline-none focus:border-blue-500 transition-all" 
+                  />
+                  <textarea 
+                    placeholder="Nội dung thông báo..." 
+                    value={newAnn.content} onChange={(e) => setNewAnn({...newAnn, content: e.target.value})}
+                    className="w-full bg-[#151a24] border border-gray-800 rounded-[24px] p-6 text-sm text-white h-48 outline-none focus:border-blue-500 transition-all resize-none"
+                  ></textarea>
+                  <button onClick={handleCreateAnn} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-6 rounded-[24px] uppercase text-[12px] tracking-[0.2em] shadow-2xl transition-all">PHÁT HÀNH NGAY</button>
+               </div>
+             </div>
+
+             <div className="space-y-4">
+                <h4 className="text-gray-600 text-[10px] font-black uppercase tracking-widest ml-4 mb-6">DANH SÁCH HIỆN CÓ</h4>
                 {announcements.map(a => (
-                  <div key={a.id} className="bg-[#0b0e14] p-6 rounded-3xl border border-gray-800">
-                     <p className="text-white font-bold text-sm mb-2">{a.title}</p>
-                     <p className="text-gray-600 text-xs line-clamp-2">{a.content}</p>
+                  <div key={a.id} className="bg-[#0b0e14] p-8 rounded-[32px] border border-gray-800 flex justify-between items-start group">
+                    <div className="max-w-[80%]">
+                      <p className="text-white font-black text-lg mb-2">{a.title}</p>
+                      <p className="text-gray-500 text-sm leading-relaxed">{a.content}</p>
+                      <p className="text-[9px] text-gray-700 font-bold uppercase mt-4 tracking-widest">
+                        Ngày tạo: {new Date(a.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteAnnouncement(a.id)}
+                      className="p-3 bg-red-900/10 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-lg"
+                      title="Xóa thông báo"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
                 ))}
+                {announcements.length === 0 && <p className="text-center py-20 text-gray-600 font-bold">Không có thông báo nào.</p>}
              </div>
           </div>
         )}
