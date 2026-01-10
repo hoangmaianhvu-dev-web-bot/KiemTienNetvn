@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { UserProfile, Task } from '../types';
+import React, { useState } from 'react';
+import { UserProfile } from '../types';
 import { supabase } from '../supabase';
 
 interface TasksPageProps {
@@ -8,99 +8,168 @@ interface TasksPageProps {
   refreshProfile: () => void;
 }
 
-// CẤU HÌNH 9 NHÀ CUNG CẤP API
+// CẤU HÌNH ADMIN & 9 NHÀ CUNG CẤP API
 const ADMIN_CONFIG = {
-  DESTINATION_URL: "https://yourblog.blogspot.com/p/xac-nhan.html",
-  PROVIDERS: {
-    link4m: { url: "https://link4m.co/api-shorten/v2?api=68208afab6b8fc60542289b6&url=", key: "shortenedUrl" },
-    yeumoney: { url: "https://yeumoney.com/QL_api.php?token=2103f2aa67d874c161e5f4388b2312af6d43742734a8ea41716b8a2cc94b7b02&format=json&url=", key: "shortenedUrl" },
-    linktot: { url: "https://linktot.net/JSON_QL_API.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=", key: "shortenedUrl" },
-    mmo4: { url: "https://4mmo.net/api?api=e60502497c3ce642ca2e4d57515bd294ae0d8d93&url=", key: "shortlink" },
-    xlink: { url: "https://xlink.co/api?token=ac55663f-ef85-4849-8ce1-4ca99bd57ce7&url=", key: "shortlink" },
-    linkngonio: { url: "https://linkngon.io/api?api=5PA5LNPwgcjiVhyRYRhPjam8jGNHpGgELAEPfZH6QzWiBk&url=", key: "shortlink" },
-    traffictot: { url: "https://services.traffictot.com/api/v1/shorten", method: "POST", headers: { "api_key": "8ddd0436120826a3a1afd7cc4275827af4edead951fb5ec5f7dafd03ccdc95f7" } },
-    kiemtienngay: { url: "https://kiemtienngay.com/apiv1?api=bdce14c14722165a01a9c8225d88abc6&url=", key: "shortenedUrl" },
-    laymanet: { url: "https://api.layma.net/api/admin/shortlink/quicklink?tokenUser=f4b53bc4126c32ec5b7211a7430ba898&format=json&url=", key: "shortenedUrl" }
-  },
-  FALLBACK_LINKS: {
-    link4m: "https://link4m.co/demo",
-    yeumoney: "https://yeumoney.com/demo",
-    // ... các link dự phòng khác tương ứng
-  }
+  CLEAN_DESTINATION: "https://yourblog.blogspot.com/p/xac-nhan.html",
+  PROVIDERS: [
+    { 
+      id: 'link4m', 
+      name: 'Nhiệm vụ 1', 
+      reward: 1000, 
+      apiUrl: "https://link4m.co/api-shorten/v2?api=68208afab6b8fc60542289b6&url=", 
+      method: "GET", 
+      jsonKey: "shortenedUrl",
+      fallback: "https://link4m.co/st?api=68208afab6b8fc60542289b6&url=https://yourblog.blogspot.com/p/xac-nhan.html"
+    },
+    { 
+      id: 'yeumoney', 
+      name: 'Nhiệm vụ 2', 
+      reward: 1200, 
+      apiUrl: "https://yeumoney.com/QL_api.php?token=2103f2aa67d874c161e5f4388b2312af6d43742734a8ea41716b8a2cc94b7b02&format=json&url=", 
+      method: "GET", 
+      jsonKey: "shortenedUrl",
+      fallback: "https://yeumoney.com/full?api=2103f2aa67d874c161e5f4388b2312af6d43742734a8ea41716b8a2cc94b7b02&url=https://yourblog.blogspot.com/p/xac-nhan.html"
+    },
+    { 
+      id: 'linktot', 
+      name: 'Nhiệm vụ 3', 
+      reward: 800, 
+      apiUrl: "https://linktot.net/JSON_QL_API.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=", 
+      method: "GET", 
+      jsonKey: "url",
+      fallback: "https://linktot.net/st?api=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=https://yourblog.blogspot.com/p/xac-nhan.html"
+    },
+    { 
+      id: 'mmo4', 
+      name: 'Nhiệm vụ 4', 
+      reward: 1500, 
+      apiUrl: "https://4mmo.net/api?api=e60502497c3ce642ca2e4d57515bd294ae0d8d93&url=", 
+      method: "GET", 
+      jsonKey: "shortenedUrl",
+      fallback: "https://4mmo.net/st?api=e60502497c3ce642ca2e4d57515bd294ae0d8d93&url=https://yourblog.blogspot.com/p/xac-nhan.html"
+    },
+    { 
+      id: 'xlink', 
+      name: 'Nhiệm vụ 5', 
+      reward: 900, 
+      apiUrl: "https://xlink.co/api?token=ac55663f-ef85-4849-8ce1-4ca99bd57ce7&url=", 
+      method: "GET", 
+      jsonKey: "url",
+      fallback: "https://xlink.co/st?api=ac55663f-ef85-4849-8ce1-4ca99bd57ce7&url=https://yourblog.blogspot.com/p/xac-nhan.html"
+    },
+    { 
+      id: 'linkngonio', 
+      name: 'Nhiệm vụ 6', 
+      reward: 1100, 
+      apiUrl: "https://linkngon.io/api?api=5PA5LNPwgcjiVhyRYRhPjam8jGNHpGgELAEPfZH6QzWiBk&url=", 
+      method: "GET", 
+      jsonKey: "url",
+      fallback: "https://linkngon.io/st?api=5PA5LNPwgcjiVhyRYRhPjam8jGNHpGgELAEPfZH6QzWiBk&url=https://yourblog.blogspot.com/p/xac-nhan.html"
+    },
+    { 
+      id: 'traffictot', 
+      name: 'Nhiệm vụ 7', 
+      reward: 1300, 
+      apiUrl: "https://services.traffictot.com/api/v1/shorten?api_key=8ddd0436120826a3a1afd7cc4275827af4edead951fb5ec5f7dafd03ccdc95f7", 
+      method: "POST", 
+      jsonKey: "shortenedUrl",
+      fallback: "https://traffictot.com/st?api=8ddd0436120826a3a1afd7cc4275827af4edead951fb5ec5f7dafd03ccdc95f7&url=https://yourblog.blogspot.com/p/xac-nhan.html"
+    },
+    { 
+      id: 'kiemtienngay', 
+      name: 'Nhiệm vụ 8', 
+      reward: 1000, 
+      apiUrl: "https://kiemtienngay.com/apiv1?api=bdce14c14722165a01a9c8225d88abc6&url=", 
+      method: "GET", 
+      jsonKey: "shortenedUrl",
+      fallback: "https://kiemtienngay.com/st?api=bdce14c14722165a01a9c8225d88abc6&url=https://yourblog.blogspot.com/p/xac-nhan.html"
+    },
+    { 
+      id: 'laymanet', 
+      name: 'Nhiệm vụ 9', 
+      reward: 1400, 
+      apiUrl: "https://api.layma.net/api/admin/shortlink/quicklink?tokenUser=f4b53bc4126c32ec5b7211a7430ba898&format=json&url=", 
+      method: "GET", 
+      jsonKey: "shortenedUrl",
+      fallback: "https://layma.net/st?api=f4b53bc4126c32ec5b7211a7430ba898&url=https://yourblog.blogspot.com/p/xac-nhan.html"
+    }
+  ]
 };
 
 const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
-  const [activeTab, setActiveTab] = useState('offer');
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [verifyingTaskId, setVerifyingTaskId] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    fetchTasks();
-    localStorage.setItem('mmo_user_id', profile.id); // Lưu cho Blogspot truy vấn
-  }, []);
-
-  const fetchTasks = async () => {
-    const { data } = await supabase.from('tasks').select('*').order('reward', { ascending: false });
-    if (data) setAllTasks(data);
-  };
-
-  const startTask = async (task: Task) => {
-    setIsProcessing(true);
-    const providerKey = task.description.toLowerCase().replace(/\s/g, ''); // Giả định description chứa tên provider
-    const config = (ADMIN_CONFIG.PROVIDERS as any)[providerKey] || ADMIN_CONFIG.PROVIDERS.link4m;
+  const startTask = async (provider: typeof ADMIN_CONFIG.PROVIDERS[0]) => {
+    setIsProcessing(provider.id);
     
-    // 1. Tạo Session mới
-    const sessionToken = Math.floor(100000 + Math.random() * 900000).toString();
-    const { error: sessionErr } = await supabase.from('task_sessions').insert([{
-      user_id: profile.id,
-      session_token: sessionToken,
-      task_id: task.id,
-      user_ip: 'checking...' // Backend Supabase có thể lấy IP qua trigger nếu cần
-    }]);
-
-    if (sessionErr) return alert("Lỗi khởi tạo phiên!");
-
-    // 2. Gọi API rút gọn
     try {
+      // 1. Lưu user_id vào LocalStorage
+      localStorage.setItem('mmo_user_id', '0337117930');
+
+      // 2. Lấy IP người dùng
+      let userIp = "127.0.0.1";
+      try {
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const ipJson = await ipRes.json();
+        userIp = ipJson.ip;
+      } catch (e) { console.warn("Lỗi lấy IP, dùng mặc định."); }
+
+      // 3. Sinh session_token (6 số ngẫu nhiên)
+      const sessionToken = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // 4. Insert dữ liệu vào Supabase task_sessions
+      const { error: sessionError } = await supabase.from('task_sessions').insert([{
+        user_id: profile.id, // Dùng ID thật của user đang đăng nhập
+        session_token: sessionToken,
+        task_id: provider.id,
+        user_ip: userIp,
+        is_completed: false
+      }]);
+
+      if (sessionError) throw new Error("Lỗi khởi tạo phiên làm việc trên hệ thống!");
+
+      // 5. Gọi API Link Shortener
       let shortUrl = "";
-      const target = ADMIN_CONFIG.DESTINATION_URL;
+      const destination = ADMIN_CONFIG.CLEAN_DESTINATION;
 
-      if (config.method === "POST") {
-        const res = await fetch(config.url, {
+      if (provider.method === "POST") {
+        // Xử lý POST cho TrafficTot
+        const response = await fetch(provider.apiUrl, {
           method: "POST",
-          headers: { ...config.headers, "Content-Type": "application/json" },
-          body: JSON.stringify({ url: target })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: destination })
         });
-        const json = await res.json();
-        shortUrl = json.shortenedUrl || json.url || json.data?.short_url;
+        const json = await response.json();
+        shortUrl = json.shortenedUrl || json.url || (json.data && json.data.short_url);
       } else {
-        const res = await fetch(config.url + encodeURIComponent(target));
-        const json = await res.json();
-        shortUrl = json[config.key] || json.url || json.shortlink;
+        // Xử lý GET cho các bên còn lại
+        const response = await fetch(provider.apiUrl + encodeURIComponent(destination));
+        const json = await response.json();
+        shortUrl = json[provider.jsonKey] || json.url || json.shortlink;
       }
 
-      if (shortUrl) {
-        window.open(shortUrl, '_blank');
-        setVerifyingTaskId(task.id);
+      // 6. Chuyển hướng hoặc Fallback
+      if (shortUrl && shortUrl.startsWith('http')) {
+        window.location.href = shortUrl;
       } else {
-        throw new Error("Invalid API Response");
+        throw new Error("API không trả về link hợp lệ");
       }
+
     } catch (err) {
-      console.warn("API Error, switching to Fallback...");
-      const fallback = (ADMIN_CONFIG.FALLBACK_LINKS as any)[providerKey] || task.url;
-      window.open(fallback, '_blank');
-      setVerifyingTaskId(task.id);
+      console.error("Task Error:", err);
+      // Cơ chế dự phòng: Chuyển hướng sang link fallback an toàn
+      window.location.href = provider.fallback;
     } finally {
-      setIsProcessing(false);
+      setIsProcessing(null);
     }
   };
 
-  const handleVerify = async (task: Task) => {
-    if (verificationCode.length !== 6) return alert("Mã xác nhận phải có 6 chữ số!");
+  const handleVerify = async (providerId: string) => {
+    if (verificationCode.length !== 6) return alert("Mã xác nhận phải gồm 6 chữ số!");
     
-    setIsProcessing(true);
+    setIsProcessing(providerId);
     try {
       const { data, error } = await supabase.rpc('claim_task_reward', {
         p_user_id: profile.id,
@@ -113,78 +182,123 @@ const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
         alert(`Thành công! +${data.reward.toLocaleString()}đ đã được cộng vào ví.`);
         setVerifyingTaskId(null);
         setVerificationCode('');
+        localStorage.removeItem(`started_${providerId}`);
         refreshProfile();
       } else {
-        alert(data.message);
+        alert(data.message || "Mã không chính xác hoặc đã hết hạn.");
       }
     } catch (err: any) {
       alert("Lỗi xác thực: " + err.message);
     } finally {
-      setIsProcessing(false);
+      setIsProcessing(null);
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-12">
-        <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2">💰 KIẾM TIỀN TỰ ĐỘNG</p>
-        <h1 className="text-4xl font-black text-white">Hệ thống <span className="text-gray-500">Nhiệm vụ 100%</span></h1>
+        <div className="flex items-center gap-2 mb-2">
+           <span className="text-xl animate-bounce">🚀</span>
+           <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.2em]">HỆ THỐNG KIẾM TIỀN AUTOMATION</p>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter">Nhiệm vụ <span className="text-gray-500">Rút gọn link</span></h1>
+        <p className="text-gray-500 mt-4 max-w-2xl font-medium">Hoàn thành các thử thách vượt link từ 9 nhà cung cấp uy tín nhất để nhận thưởng tức thì.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {allTasks.filter(t => t.type === activeTab).map(task => (
-          <div key={task.id} className="bg-[#151a24] rounded-[40px] p-8 border border-gray-800 hover:border-blue-500/50 transition-all shadow-xl group">
-            <div className="flex justify-between items-start mb-8">
-              <div className="text-4xl">{task.icon || '🔗'}</div>
-              <div className="text-right">
-                <p className="text-blue-500 font-black text-2xl">+{Number(task.reward).toLocaleString()}đ</p>
-                <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest">VNĐ / NHIỆM VỤ</p>
-              </div>
-            </div>
+        {ADMIN_CONFIG.PROVIDERS.map((provider) => (
+          <div key={provider.id} className="bg-[#151a24] rounded-[40px] p-8 border border-gray-800 hover:border-blue-500/50 transition-all shadow-xl group relative overflow-hidden flex flex-col justify-between min-h-[320px]">
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-600/5 blur-[40px] rounded-full group-hover:bg-blue-600/10 transition-colors"></div>
             
-            <h3 className="text-xl font-bold text-white mb-4">{task.title}</h3>
-            <p className="text-gray-500 text-sm mb-8 line-clamp-2">{task.description}</p>
-
-            {verifyingTaskId === task.id ? (
-              <div className="space-y-4 animate-in slide-in-from-top-2">
-                <input 
-                  type="text" 
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
-                  placeholder="Dán mã 6 số tại đây..."
-                  className="w-full bg-black border border-blue-500/30 rounded-2xl py-4 px-6 text-white text-center font-black tracking-[0.5em]"
-                />
-                <button 
-                  onClick={() => handleVerify(task)}
-                  disabled={isProcessing}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest disabled:opacity-50"
-                >
-                  {isProcessing ? "ĐANG XỬ LÝ..." : "XÁC NHẬN & NHẬN TIỀN"}
-                </button>
+            <div>
+              <div className="flex justify-between items-start mb-8">
+                <div className="bg-gray-900 w-16 h-16 rounded-[22px] flex items-center justify-center text-3xl border border-gray-800 shadow-inner group-hover:scale-110 transition-transform">
+                  {provider.id === 'traffictot' ? '🔥' : provider.id === 'yeumoney' ? '💰' : '🔗'}
+                </div>
+                <div className="text-right">
+                  <p className="text-blue-500 font-black text-3xl">+{provider.reward.toLocaleString()}đ</p>
+                  <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest mt-1">THƯỞNG NGAY</p>
+                </div>
               </div>
-            ) : (
-              <button 
-                onClick={() => startTask(task)}
-                disabled={isProcessing}
-                className="w-full bg-gray-800 group-hover:bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
-              >
-                {isProcessing ? "ĐANG TẠO LINK..." : "BẮT ĐẦU NHIỆM VỤ"}
-              </button>
-            )}
+              
+              <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">{provider.name}</h3>
+              <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest mb-8">Nguồn: {provider.id}</p>
+            </div>
+
+            <div className="mt-auto">
+              {verifyingTaskId === provider.id ? (
+                <div className="space-y-4 animate-in slide-in-from-top-2">
+                  <input 
+                    type="text" 
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                    placeholder="NHẬP MÃ 6 SỐ"
+                    className="w-full bg-black border border-blue-500/30 rounded-2xl py-5 px-6 text-white text-center font-black tracking-[0.5em] text-xl focus:border-blue-500 outline-none shadow-inner"
+                  />
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleVerify(provider.id)}
+                      disabled={isProcessing === provider.id}
+                      className="flex-grow bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-900/30 transition-all flex items-center justify-center"
+                    >
+                      {isProcessing === provider.id ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "XÁC NHẬN"}
+                    </button>
+                    <button onClick={() => setVerifyingTaskId(null)} className="bg-gray-800 text-gray-400 px-6 rounded-2xl font-black text-[10px]">HỦY</button>
+                  </div>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => {
+                    if (localStorage.getItem(`started_${provider.id}`)) {
+                       setVerifyingTaskId(provider.id);
+                    } else {
+                       startTask(provider);
+                       localStorage.setItem(`started_${provider.id}`, 'true');
+                    }
+                  }}
+                  disabled={isProcessing !== null}
+                  className="w-full bg-[#1e2530] group-hover:bg-blue-600 text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg"
+                >
+                  {isProcessing === provider.id ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <>LÀM NHIỆM VỤ <span className="group-hover:translate-x-1 transition-transform">→</span></>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-20 p-10 bg-blue-600/5 border border-blue-500/10 rounded-[48px]">
-        <h4 className="text-white font-bold mb-4 flex items-center gap-2">
-          <span className="text-blue-500">●</span> Quy trình nhận mã:
+      <div className="mt-24 p-12 bg-blue-600/5 border border-blue-500/10 rounded-[48px] relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-12 opacity-5 text-9xl pointer-events-none group-hover:scale-110 transition-transform">💡</div>
+        <h4 className="text-white text-xl font-bold mb-8 flex items-center gap-3">
+          <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+          Quy trình kiếm tiền:
         </h4>
-        <ol className="text-gray-500 text-sm space-y-4">
-          <li>1. Bấm <b>Bắt đầu nhiệm vụ</b> để hệ thống tự động rút gọn link qua API.</li>
-          <li>2. Vượt qua các bước xác minh trên trang rút gọn để tới trang Blogspot đích.</li>
-          <li>3. Tại trang Blogspot, mã 6 số sẽ hiển thị tự động dựa trên phiên làm việc của bạn.</li>
-          <li>4. Copy mã đó, quay lại đây dán vào ô xác nhận để nhận thưởng tức thì.</li>
-        </ol>
+        <div className="grid md:grid-cols-2 gap-10">
+           <ul className="space-y-6">
+              <li className="flex gap-6 items-start">
+                 <span className="text-blue-500 font-black text-lg">1.</span>
+                 <p className="text-gray-500 text-sm leading-relaxed">Chọn nhiệm vụ và bấm <b className="text-white">Làm nhiệm vụ</b> để nhận link rút gọn.</p>
+              </li>
+              <li className="flex gap-6 items-start">
+                 <span className="text-blue-500 font-black text-lg">2.</span>
+                 <p className="text-gray-500 text-sm leading-relaxed">Thực hiện vượt link theo yêu cầu của nhà cung cấp để tới trang Blogspot xác nhận.</p>
+              </li>
+           </ul>
+           <ul className="space-y-6">
+              <li className="flex gap-6 items-start">
+                 <span className="text-blue-500 font-black text-lg">3.</span>
+                 <p className="text-gray-500 text-sm leading-relaxed">Lấy mã xác nhận 6 số hiển thị tại bài viết trên Blogspot.</p>
+              </li>
+              <li className="flex gap-6 items-start">
+                 <span className="text-blue-500 font-black text-lg">4.</span>
+                 <p className="text-gray-500 text-sm leading-relaxed">Quay lại đây, nhập mã vào ô xác nhận để nhận thưởng <b className="text-green-500">Tự động</b>.</p>
+              </li>
+           </ul>
+        </div>
       </div>
     </div>
   );
