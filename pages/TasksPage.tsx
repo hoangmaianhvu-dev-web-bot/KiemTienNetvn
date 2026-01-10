@@ -116,6 +116,15 @@ const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
     setVerifyingTaskId(null);
   };
 
+  // LOGIC LÀM LẠI NHIỆM VỤ (Reset trạng thái started)
+  const handleResetTask = (providerId: string) => {
+    if (window.confirm("Bạn muốn làm lại nhiệm vụ này? Mã cũ sẽ không còn hiệu lực.")) {
+      localStorage.removeItem(`started_${providerId}`);
+      setVerifyingTaskId(null);
+      setVerificationCode('');
+    }
+  };
+
   // 3. KIỂM TRA SỐ LƯỢT LÀM TRONG NGÀY
   const checkDailyLimit = async (taskId: string, maxPerDay: number) => {
     const today = new Date();
@@ -292,11 +301,14 @@ const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
                     <button 
                       onClick={() => handleVerify(provider.id)}
                       disabled={isProcessing === provider.id}
-                      className="flex-grow bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center"
+                      className="flex-grow bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center shadow-lg shadow-blue-900/20"
                     >
                       {isProcessing === provider.id ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "NHẬN TIỀN"}
                     </button>
-                    <button onClick={handleCancelVerify} className="bg-gray-800 text-gray-400 px-6 rounded-2xl font-black text-[10px]">HỦY</button>
+                    <div className="flex flex-col gap-2">
+                      <button onClick={handleCancelVerify} className="bg-gray-800 text-gray-400 px-4 py-2 rounded-xl font-black text-[9px] uppercase hover:text-white transition-colors">ĐÓNG</button>
+                      <button onClick={() => handleResetTask(provider.id)} className="bg-red-900/10 text-red-500/60 px-4 py-2 rounded-xl font-black text-[9px] uppercase hover:bg-red-600 hover:text-white transition-all">LÀM LẠI</button>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -340,7 +352,7 @@ const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
            <ul className="space-y-6">
               <li className="flex gap-6 items-start">
                  <span className="text-blue-500 font-black">3.</span>
-                 <p className="text-gray-500 text-sm">Mỗi nhiệm vụ có <b className="text-white">Giới hạn lượt làm</b> khác nhau mỗi ngày.</p>
+                 <p className="text-gray-500 text-sm">Nếu link lỗi hoặc quên lấy mã, hãy bấm nút <b className="text-red-500">Làm lại</b> để bắt đầu lại nhiệm vụ.</p>
               </li>
               <li className="flex gap-6 items-start">
                  <span className="text-blue-500 font-black">4.</span>
