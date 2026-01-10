@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { UserProfile, Announcement } from '../types.ts';
@@ -30,10 +31,33 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
         .from('announcements')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
       if (data) setAnnouncements(data);
     } catch (err) {
-      console.error("Error fetching announcements:", err);
+      console.error("Lỗi lấy thông báo:", err);
+    }
+  };
+
+  const handleDeleteNotification = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      // Vì announcements dùng chung, nếu muốn xóa vĩnh viễn bản ghi trong DB:
+      const { error } = await supabase.from('announcements').delete().eq('id', id);
+      if (error) throw error;
+      setAnnouncements(announcements.filter(a => a.id !== id));
+    } catch (err) {
+      console.error("Lỗi xóa thông báo:", err);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!window.confirm("Xóa tất cả thông báo hệ thống?")) return;
+    try {
+      const { error } = await supabase.from('announcements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) throw error;
+      setAnnouncements([]);
+    } catch (err) {
+      console.error("Lỗi xóa tất cả:", err);
     }
   };
 
@@ -50,7 +74,6 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
     navItems.push({ label: 'Quản trị', path: '/admin' });
   }
 
-  // Luôn đảm bảo có tên hiển thị
   const displayName = profile?.full_name || profile?.email?.split('@')[0] || 'Thành viên';
 
   return (
@@ -103,14 +126,31 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
                 <div className="absolute right-0 mt-4 w-80 bg-[#151a24] border border-gray-800 rounded-[24px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
                   <div className="p-5 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
                     <h4 className="text-white font-black text-xs uppercase tracking-widest">Thông báo</h4>
+                    {announcements.length > 0 && (
+                      <button 
+                        onClick={handleClearAll}
+                        className="text-red-500 text-[9px] font-black uppercase hover:underline"
+                      >
+                        Xóa tất cả
+                      </button>
+                    )}
                   </div>
                   <div className="max-h-96 overflow-y-auto">
                     {announcements.map(ann => (
-                      <div key={ann.id} className="p-5 border-b border-gray-800/50 hover:bg-white/5 transition-all">
-                        <p className="text-white font-bold text-xs mb-1">{ann.title}</p>
+                      <div key={ann.id} className="p-5 border-b border-gray-800/50 hover:bg-white/5 transition-all relative group/item">
+                        <button 
+                          onClick={(e) => handleDeleteNotification(ann.id, e)}
+                          className="absolute top-4 right-4 text-gray-700 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-all"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                        <p className="text-white font-bold text-xs mb-1 pr-6">{ann.title}</p>
                         <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{ann.content}</p>
                       </div>
                     ))}
+                    {announcements.length === 0 && (
+                      <div className="p-10 text-center text-gray-600 text-[10px] font-black uppercase">Không có thông báo mới</div>
+                    )}
                   </div>
                 </div>
               )}

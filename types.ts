@@ -12,7 +12,7 @@ export interface UserProfile {
 }
 
 export interface Task {
-  id: string;
+  id: string; // Will be UUID string
   title: string;
   reward: number;
   type: string;
@@ -31,11 +31,12 @@ export interface Withdrawal {
   id: string;
   user_id: string;
   amount: number;
-  method: 'bank' | 'garena';
+  method: 'bank' | 'garena' | 'zing';
   status: 'pending' | 'completed' | 'rejected';
   created_at: string;
   bank_name?: string;
   account_number?: string;
+  recipient_email?: string;
 }
 
 export interface Announcement {
