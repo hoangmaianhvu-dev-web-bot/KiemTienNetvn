@@ -24,29 +24,6 @@
         .animate-pulse-fast { animation: pulse-custom 1.5s ease-in-out infinite; }
     </style>
 
-    <script>
-        (function() {
-            window.addEventListener('unhandledrejection', function(event) {
-                const msg = event.reason?.message || "";
-                if (msg.includes('message port closed') || msg.includes('captcha') || msg.includes('runtime.lastError')) {
-                    event.preventDefault();
-                }
-            });
-
-            const rawError = console.error;
-            console.error = function() {
-                const msg = arguments[0];
-                if (typeof msg === 'string' && (
-                    msg.includes('captcha') || 
-                    msg.includes('Message port closed') || 
-                    msg.includes('runtime.lastError') ||
-                    msg.includes('Extension context invalidated')
-                )) return;
-                rawError.apply(console, arguments);
-            };
-        })();
-    </script>
-
     <script type="importmap">
 {
   "imports": {

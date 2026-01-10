@@ -6,6 +6,7 @@ const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
+  const [referrerCode, setReferrerCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCaptchaGuide, setShowCaptchaGuide] = useState(false);
@@ -22,6 +23,11 @@ const RegisterPage: React.FC = () => {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
       });
       
       if (authError) {
@@ -33,7 +39,8 @@ const RegisterPage: React.FC = () => {
       }
 
       if (authData.user) {
-        const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        // Tạo mã giới thiệu ngẫu nhiên gồm 6 chữ số (100000 - 999999)
+        const myReferralCode = Math.floor(100000 + Math.random() * 900000).toString();
         const role = email.toLowerCase() === 'nthd@gmail.com' ? 'admin' : 'user';
         
         const { error: profileError } = await supabase
@@ -46,13 +53,18 @@ const RegisterPage: React.FC = () => {
               balance: 0,
               total_earned: 0,
               tasks_completed: 0,
-              referral_code: referralCode,
-              role: role
+              referral_code: myReferralCode,
+              role: role,
+              referred_by: referrerCode.trim() || null
             }
           ]);
 
-        if (profileError) console.error('Profile update failed:', profileError.message);
+        if (profileError) {
+          console.error('Profile update failed:', profileError.message);
+          throw new Error("Không thể tạo hồ sơ người dùng: " + profileError.message);
+        }
         
+        alert("Đăng ký thành công! Đang chuyển hướng...");
         await new Promise(resolve => setTimeout(resolve, 800));
         navigate('/dashboard');
       }
@@ -108,19 +120,27 @@ const RegisterPage: React.FC = () => {
           
           <form onSubmit={handleRegister} className="space-y-6">
             <div className="space-y-4">
-               <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Họ và tên của bạn" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
-               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Địa chỉ Email" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
-               <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mật khẩu bảo mật" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
+               <div>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Họ và tên</label>
+                  <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nhập tên thật để nhận tiền" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
+               </div>
+               <div>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Email</label>
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Địa chỉ Email" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
+               </div>
+               <div>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Mật khẩu</label>
+                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mật khẩu bảo mật" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
+               </div>
+               <div>
+                  <label className="block text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 ml-1">Mã giới thiệu (Nếu có)</label>
+                  <input type="text" value={referrerCode} onChange={(e) => setReferrerCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} placeholder="VD: 123456" className="w-full bg-[#151a24] border border-blue-500/20 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
+               </div>
             </div>
             
             {error && (
               <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl">
                 <p className="text-red-500 text-[11px] font-black uppercase tracking-wider mb-2">{error}</p>
-                {showCaptchaGuide && (
-                  <div className="text-gray-400 text-[10px] leading-relaxed border-t border-red-500/20 pt-2">
-                    <span className="text-white font-bold">CÁCH FIX:</span> Bạn cần vào Dashboard Supabase &rarr; <span className="text-blue-400 font-bold">Authentication</span> &rarr; <span className="text-blue-400 font-bold">Auth Settings</span> &rarr; Cuộn xuống và <span className="text-red-400 font-bold">TẮT (Disable)</span> mục "Enable CAPTCHA protection".
-                  </div>
-                )}
               </div>
             )}
             

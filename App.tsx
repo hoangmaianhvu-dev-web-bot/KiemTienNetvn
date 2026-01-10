@@ -23,7 +23,6 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    // HÀM CỨU CÁNH CHO AUTH: Không để việc check auth làm treo web quá 5s
     const authTimeout = setTimeout(() => {
       if (mounted && loading) {
         console.warn("Auth timeout: Tiếp tục vào web với trạng thái khách.");
@@ -83,7 +82,12 @@ const App: React.FC = () => {
         .maybeSingle();
       
       if (error) throw error;
-      if (data) setProfile(data);
+      
+      // Nếu có session nhưng không có profile, ta vẫn cho setLoading(false)
+      // nhưng LoginPage sẽ xử lý việc tạo profile khi đăng nhập lại
+      if (data) {
+        setProfile(data);
+      }
     } catch (err: any) {
       console.error('Profile fetch error:', err.message);
     } finally {
@@ -107,7 +111,8 @@ const App: React.FC = () => {
     );
   }
 
-  const isAuth = !!session;
+  // SỬA ĐỔI: Nếu có session nhưng chưa có profile row, ta vẫn coi như chưa auth để LoginPage xử lý tạo lại
+  const isAuth = !!session && !!profile;
 
   return (
     <Router>
@@ -124,7 +129,7 @@ const App: React.FC = () => {
             <Route path="/withdraw" element={isAuth && profile ? <WithdrawPage profile={profile} refreshProfile={refreshProfile} /> : <Navigate to="/login" />} />
             <Route path="/referral" element={isAuth && profile ? <ReferralPage profile={profile} /> : <Navigate to="/login" />} />
             <Route path="/support" element={isAuth && profile ? <SupportPage profile={profile} /> : <Navigate to="/login" />} />
-            <Route path="/profile" element={isAuth ? <ProfilePage profile={profile} /> : <Navigate to="/login" />} />
+            <Route path="/profile" element={isAuth && profile ? <ProfilePage profile={profile} /> : <Navigate to="/login" />} />
             <Route path="/admin" element={isAuth && profile?.role === 'admin' ? <AdminPage profile={profile} /> : <Navigate to="/dashboard" />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

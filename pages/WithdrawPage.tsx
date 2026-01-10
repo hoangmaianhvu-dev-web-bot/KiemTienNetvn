@@ -41,10 +41,24 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
       return alert('Vui lòng nhập chính xác Gmail để nhận mã thẻ Garena');
     }
 
-    if (!isAdmin && val > (profile.balance || 0)) return alert('Số dư hiện tại không đủ để thực hiện lệnh rút này');
-
     setLoading(true);
     try {
+      // 1. LẤY SỐ DƯ THỰC TẾ TỪ DB ĐỂ KIỂM TRA
+      const { data: latestProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('id', profile.id)
+        .single();
+
+      if (fetchError) throw new Error("Không thể kết nối máy chủ để kiểm tra ví.");
+      
+      const realBalance = Number(latestProfile.balance || 0);
+
+      if (!isAdmin && val > realBalance) {
+        throw new Error('Số dư của bạn đã thay đổi hoặc không đủ. Vui lòng làm mới trang.');
+      }
+
+      // 2. TẠO LỆNH RÚT
       const { error: withdrawError } = await supabase
         .from('withdrawals')
         .insert([{ 
@@ -58,22 +72,23 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
 
       if (withdrawError) throw withdrawError;
 
+      // 3. TRỪ TIỀN TRONG DATABASE (NẾU KHÔNG PHẢI ADMIN)
       if (!isAdmin) {
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ balance: (profile.balance || 0) - val })
+          .update({ balance: realBalance - val })
           .eq('id', profile.id);
         if (profileError) throw profileError;
       }
 
-      alert(isAdmin ? 'Admin rút tiền thành công (Đã tự động phê duyệt)!' : 'Gửi yêu cầu thành công! Mã thẻ hoặc tiền sẽ được xử lý trong 15-60 phút.');
+      alert(isAdmin ? 'Admin rút tiền thành công (Đã tự động phê duyệt)!' : 'Gửi yêu cầu thành công! Lệnh rút của bạn đang chờ xử lý.');
       setAmount('');
       setBankName('');
       setAccountNumber('');
       fetchHistory();
-      refreshProfile();
+      refreshProfile(); // Cập nhật số dư hiển thị
     } catch (err: any) {
-      alert('Lỗi rút tiền: ' + err.message);
+      alert('Lỗi: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -94,11 +109,6 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
                  Bảo mật giao dịch 100%
                </div>
-               {isAdmin && (
-                 <div className="bg-yellow-400/20 px-5 py-2.5 rounded-2xl text-[10px] font-black text-yellow-100 uppercase tracking-widest border border-yellow-400/20">
-                   CHẾ ĐỘ QUẢN TRỊ
-                 </div>
-               )}
             </div>
           </div>
 
@@ -138,7 +148,7 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
                   <div className="grid md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4">
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Tên Ngân hàng</label>
-                      <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="VD: MB Bank, Momo..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm focus:border-blue-500 outline-none placeholder-gray-700" />
+                      <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="VD: MB Bank, Vietcombank..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm focus:border-blue-500 outline-none placeholder-gray-700" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Số tài khoản (STK)</label>
@@ -149,9 +159,6 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
                   <div className="animate-in fade-in slide-in-from-bottom-4">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Email nhận mã thẻ Garena</label>
                     <input type="email" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Nhập địa chỉ Gmail của bạn..." className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-4 px-6 text-white text-sm focus:border-blue-500 outline-none placeholder-gray-700" />
-                    <p className="mt-4 text-[9px] text-gray-600 font-black uppercase ml-2 leading-relaxed">
-                      * <span className="text-blue-500">Lưu ý:</span> Mã thẻ sẽ được gửi vào hòm thư Gmail này. Vui lòng kiểm tra kỹ để tránh sai sót.
-                    </p>
                   </div>
                 )}
              </div>
@@ -171,13 +178,7 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
         </div>
 
         <div className="bg-[#151a24] rounded-[48px] p-10 border border-gray-800 shadow-xl h-fit">
-           <div className="flex items-center justify-between mb-10">
-              <h3 className="text-xl font-black text-white uppercase tracking-widest">Lịch sử rút</h3>
-              <button onClick={fetchHistory} className="text-gray-600 hover:text-blue-500 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-              </button>
-           </div>
-           
+           <h3 className="text-xl font-black text-white uppercase tracking-widest mb-10">Lịch sử rút</h3>
            <div className="space-y-4">
               {history.map(item => (
                 <div key={item.id} className="p-6 bg-gray-900/50 rounded-3xl border border-gray-800 group hover:bg-gray-800 transition-all">
@@ -196,15 +197,11 @@ const WithdrawPage: React.FC<WithdrawPageProps> = ({ profile, refreshProfile }) 
                   </div>
                   <div className="pt-3 border-t border-gray-800/50">
                     <p className="text-[10px] text-gray-600 font-bold truncate">Nhận qua: {item.account_number}</p>
-                    <p className="text-[9px] text-gray-700 mt-1 uppercase font-bold">{new Date(item.created_at).toLocaleString('vi-VN')}</p>
                   </div>
                 </div>
               ))}
               {history.length === 0 && (
-                <div className="text-center py-20 flex flex-col items-center">
-                   <div className="text-4xl mb-4 opacity-10">📭</div>
-                   <p className="text-gray-700 font-bold uppercase text-[10px] tracking-widest">Không có giao dịch</p>
-                </div>
+                <div className="text-center py-20 opacity-10">📭 Không có giao dịch</div>
               )}
            </div>
         </div>

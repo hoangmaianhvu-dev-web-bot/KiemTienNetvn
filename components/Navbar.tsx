@@ -50,6 +50,9 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
     navItems.push({ label: 'Quản trị', path: '/admin' });
   }
 
+  // Luôn đảm bảo có tên hiển thị
+  const displayName = profile?.full_name || profile?.email?.split('@')[0] || 'Thành viên';
+
   return (
     <nav className="bg-[#0b0e14] border-b border-gray-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -100,18 +103,14 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
                 <div className="absolute right-0 mt-4 w-80 bg-[#151a24] border border-gray-800 rounded-[24px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
                   <div className="p-5 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
                     <h4 className="text-white font-black text-xs uppercase tracking-widest">Thông báo</h4>
-                    <span className="text-[10px] bg-blue-600 px-2 py-0.5 rounded-full text-white font-bold">MỚI</span>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
-                    {announcements.length > 0 ? announcements.map(ann => (
+                    {announcements.map(ann => (
                       <div key={ann.id} className="p-5 border-b border-gray-800/50 hover:bg-white/5 transition-all">
                         <p className="text-white font-bold text-xs mb-1">{ann.title}</p>
                         <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{ann.content}</p>
-                        <p className="text-[9px] text-gray-700 mt-2 uppercase font-black">{new Date(ann.created_at).toLocaleDateString('vi-VN')}</p>
                       </div>
-                    )) : (
-                      <div className="p-10 text-center text-gray-600 text-[10px] font-bold uppercase tracking-widest">Không có thông báo</div>
-                    )}
+                    ))}
                   </div>
                 </div>
               )}
@@ -119,11 +118,11 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
 
             <div className="flex items-center space-x-3 bg-gray-900/50 px-4 py-1.5 rounded-full border border-gray-800">
               <div className="text-right hidden sm:block">
-                <p className="text-[10px] font-black text-white leading-none truncate max-w-[100px]">{profile?.full_name || 'Member'}</p>
+                <p className="text-[10px] font-black text-white leading-none truncate max-w-[100px]">{displayName}</p>
                 <p className="text-[9px] text-blue-500 font-black mt-1 uppercase tracking-tighter">{profile?.role === 'admin' ? 'CHỦ HỆ THỐNG' : 'THÀNH VIÊN'}</p>
               </div>
               <Link to="/profile" className="h-8 w-8 rounded-full border border-blue-500/30 p-0.5 overflow-hidden hover:border-blue-500 transition-colors">
-                <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'User'}`} alt="avatar" className="rounded-full w-full h-full object-cover" />
+                <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${displayName}`} alt="avatar" className="rounded-full w-full h-full object-cover" />
               </Link>
             </div>
           </div>

@@ -15,10 +15,11 @@ export interface Task {
   id: string;
   title: string;
   reward: number;
-  type: 'link' | 'social' | 'app' | 'video';
+  type: 'offer' | 'regular' | 'special' | 'social';
   description: string;
   url: string;
   icon: string;
+  created_at?: string;
 }
 
 export interface Withdrawal {
