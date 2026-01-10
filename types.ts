@@ -12,7 +12,7 @@ export interface UserProfile {
 }
 
 export interface Task {
-  id: string; // Will be UUID string
+  id: string; // Sử dụng chuỗi UUID
   title: string;
   reward: number;
   type: string;
@@ -22,6 +22,7 @@ export interface Task {
   max_per_day: number;
   api_url?: string;
   method?: 'GET' | 'POST';
+  apiKey?: string; // Dành cho TrafficTot hoặc các bên cần key riêng
   json_key?: string;
   fallback_url?: string;
   created_at?: string;
@@ -37,6 +38,11 @@ export interface Withdrawal {
   bank_name?: string;
   account_number?: string;
   recipient_email?: string;
+  profiles?: {
+    full_name: string;
+    email: string;
+    balance: number;
+  };
 }
 
 export interface Announcement {
