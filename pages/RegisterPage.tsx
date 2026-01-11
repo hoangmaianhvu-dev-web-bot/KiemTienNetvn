@@ -20,7 +20,7 @@ const RegisterPage: React.FC = () => {
   }, [location]);
 
   const generateUniqueRefCode = () => {
-    // Tạo chuỗi 6 số ngẫu nhiên lộn xộn
+    // Tạo chuỗi 6 số ngẫu nhiên lộn xộn duy nhất cho mỗi người
     return Math.floor(100000 + Math.random() * 899999).toString();
   };
 
@@ -94,7 +94,7 @@ const RegisterPage: React.FC = () => {
 
         <div className="relative z-10">
           <h1 className="text-6xl font-black text-white mb-6 leading-tight tracking-tighter">Bắt đầu <br /><span className="text-blue-500">Kinh Doanh Số.</span></h1>
-          <p className="text-gray-400 text-xl max-w-md leading-relaxed">Tham gia cùng cộng đồng MMO hiện đại nhất 2025.</p>
+          <p className="text-gray-400 text-xl max-w-md leading-relaxed font-medium">Tham gia cùng cộng đồng MMO hiện đại nhất 2025 và bắt đầu tạo nguồn thu nhập thụ động.</p>
         </div>
         <div className="flex gap-12 relative z-10">
           <div><p className="text-3xl font-black text-white">2025</p><p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Version 6.0</p></div>
@@ -111,30 +111,34 @@ const RegisterPage: React.FC = () => {
             <div className="space-y-4">
                <div>
                   <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Họ và tên</label>
-                  <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Tên thật để nhận tiền" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
+                  <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Tên thật để nhận tiền" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700 font-bold" />
                </div>
                <div>
                   <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Email</label>
-                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Địa chỉ Email" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Địa chỉ Email" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700 font-bold" />
                </div>
                <div>
                   <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Mật khẩu</label>
-                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mật khẩu bảo mật" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
+                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mật khẩu bảo mật" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700 font-bold" />
                </div>
                <div>
                   <label className="block text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 ml-1">Mã giới thiệu (Nếu có)</label>
-                  <input type="text" value={referrerCode} onChange={(e) => setReferrerCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} placeholder="VD: 123456" className="w-full bg-[#151a24] border border-blue-500/20 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
+                  <input type="text" value={referrerCode} onChange={(e) => setReferrerCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} placeholder="VD: 123456" className="w-full bg-[#151a24] border border-blue-500/20 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700 font-black tracking-widest" />
                </div>
             </div>
             
-            {error && <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-black uppercase">{error}</div>}
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">
+                {error}
+              </div>
+            )}
             
-            <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-900/20 transition-all disabled:opacity-50 flex items-center justify-center gap-3">
+            <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-900/20 transition-all disabled:opacity-50 flex items-center justify-center gap-3 uppercase tracking-widest text-xs">
               {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'ĐĂNG KÝ THÀNH VIÊN'}
             </button>
           </form>
-          <p className="mt-8 text-center text-gray-500 text-sm">
-            Đã có tài khoản? <Link to="/login" className="text-blue-500 font-bold hover:underline">Đăng nhập</Link>
+          <p className="mt-8 text-center text-gray-500 text-sm font-medium">
+            Đã có tài khoản? <Link to="/login" className="text-blue-500 font-black hover:underline ml-1">Đăng nhập</Link>
           </p>
         </div>
       </div>

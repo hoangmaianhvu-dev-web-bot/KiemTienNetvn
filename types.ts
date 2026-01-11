@@ -1,4 +1,5 @@
 
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -17,7 +18,8 @@ export interface Task {
   reward: number;
   type: string;
   description: string;
-  url: string;
+  // Cập nhật: Làm cho url là tùy chọn vì một số nhiệm vụ sử dụng api_url để tạo link động
+  url?: string;
   icon: string;
   max_per_day: number;
   api_url?: string;
