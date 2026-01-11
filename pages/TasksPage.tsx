@@ -8,7 +8,7 @@ interface TasksPageProps {
   refreshProfile: () => void;
 }
 
-// 1. ĐỊNH NGHĨA 10 MÃ UUID CỐ ĐỊNH THEO CHUẨN 8-4-4-4-12
+// 1. ĐỊNH NGHĨA 10 MÃ UUID CỐ ĐỊNH
 const TASK_IDS = [
   "550e8400-e29b-41d4-a716-446655440001", // Link4m
   "550e8400-e29b-41d4-a716-446655440002", // YeuMoney
@@ -18,24 +18,29 @@ const TASK_IDS = [
   "550e8400-e29b-41d4-a716-446655440006", // LinkTot
   "550e8400-e29b-41d4-a716-446655440007", // XLink
   "550e8400-e29b-41d4-a716-446655440008", // LinkNgonIO
-  "550e8400-e29b-41d4-a716-446655440009", // TrafficTot (POST)
+  "550e8400-e29b-41d4-a716-446655440009", // TrafficTot
   "550e8400-e29b-41d4-a716-446655440010"  // Yeulink
 ];
 
 const PROXY = "https://api.allorigins.win/get?url=";
 const DEST_URL = "https://avudev-verifi.blogspot.com/";
 
-const HARDCODED_TASKS: Task[] = [
-  { id: TASK_IDS[0], title: 'Nhiệm vụ 1 (Link4m)', reward: 200, max_per_day: 2, type: 'THƯỜNG', icon: '🔗', api_url: 'https://link4m.co/api-shorten/v2?api=68208afab6b8fc60542289b6&url=', method: 'GET', description: 'LINK4M', url: DEST_URL },
-  { id: TASK_IDS[1], title: 'Nhiệm vụ 2 (YeuMoney)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🔗', api_url: 'https://yeumoney.com/QL_api.php?token=2103f2aa67d874c161e5f4388b2312af6d43742734a8ea41716b8a2cc94b7b02&format=json&url=', method: 'GET', description: 'YEUMONEY', url: DEST_URL },
-  { id: TASK_IDS[2], title: 'Nhiệm vụ 3 (LaymaNet)', reward: 200, max_per_day: 2, type: 'THƯỜNG', icon: '🔗', api_url: 'https://layma.net/api?api=f4b53bc4126c32ec5b7211a7430ba898&url=', method: 'GET', description: 'LAYMANET', url: DEST_URL },
-  { id: TASK_IDS[3], title: 'Nhiệm vụ 4 (KiemTienNgay)', reward: 200, max_per_day: 2, type: 'THƯỜNG', icon: '🔗', api_url: 'https://kiemtienngay.vn/api?api=bdce14c14722165a01a9c8225d88abc6&url=', method: 'GET', description: 'KIEMTIENNGAY', url: DEST_URL },
-  { id: TASK_IDS[4], title: 'Nhiệm vụ 5 (4MMO)', reward: 200, max_per_day: 2, type: 'THƯỜNG', icon: '🔗', api_url: 'https://4mmo.vn/api?api=e60502497c3ce642ca2e4d57515bd294ae0d8d93&url=', method: 'GET', description: 'MMO4', url: DEST_URL },
-  { id: TASK_IDS[5], title: 'Nhiệm vụ 6 (LinkTot)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🔗', api_url: 'https://linktot.net/JSON_QL_API.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=', method: 'GET', description: 'LINKTOT', url: DEST_URL },
-  { id: TASK_IDS[6], title: 'Nhiệm vụ 7 (XLink)', reward: 200, max_per_day: 2, type: 'THƯỜNG', icon: '🔗', api_url: 'https://xlink.top/api?api=ac55663f-ef85-4849-8ce1-4ca99bd57ce7&url=', method: 'GET', description: 'XLINK', url: DEST_URL },
-  { id: TASK_IDS[7], title: 'Nhiệm vụ 8 (LinkNgonIO)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🔗', api_url: 'https://linkngon.io/api?api=5PA5LNPwgcjiVhyRYRhPjam8jGNHpGgELAEPfZH6QzWiBk&url=', method: 'GET', description: 'LINKNGONIO', url: DEST_URL },
-  { id: TASK_IDS[8], title: 'Nhiệm vụ 9 (TrafficTot)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🚀', api_url: 'https://services.traffictot.com/api/v1/shorten', method: 'POST', description: 'TRAFFICTOT', url: DEST_URL, apiKey: '8ddd0436120826a3a1afd7cc4275827af4edead951fb5ec5f7dafd03ccdc95f7' },
-  { id: TASK_IDS[9], title: 'Nhiệm vụ 10 (Yeulink)', reward: 200, max_per_day: 4, type: 'THƯỜNG', icon: '🔗', api_url: 'https://yeulink.com/api?token=a7b730f5-4fff-4b47-8ae2-c05afb3754a3&url=', method: 'GET', description: 'YEULINK', url: DEST_URL },
+// Cấu hình nâng cao cho các nhà cung cấp
+interface TaskConfig extends Task {
+  noProxy?: boolean;
+}
+
+const HARDCODED_TASKS: TaskConfig[] = [
+  { id: TASK_IDS[2], title: 'Nhiệm vụ 1 (LaymaNet)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🔗', api_url: 'https://layma.net/api?api=f4b53bc4126c32ec5b7211a7430ba898&url=', method: 'GET', description: 'LAYMANET', url: DEST_URL, noProxy: true, fallback_url: 'https://layma.net/st?api=f4b53bc4126c32ec5b7211a7430ba898&url=' + encodeURIComponent(DEST_URL) },
+  { id: TASK_IDS[3], title: 'Nhiệm vụ 2 (KiemTienNgay)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🔗', api_url: 'https://kiemtienngay.vn/api?api=bdce14c14722165a01a9c8225d88abc6&url=', method: 'GET', description: 'KIEMTIENNGAY', url: DEST_URL, noProxy: true, fallback_url: 'https://kiemtienngay.vn/st?api=bdce14c14722165a01a9c8225d88abc6&url=' + encodeURIComponent(DEST_URL) },
+  { id: TASK_IDS[4], title: 'Nhiệm vụ 3 (4MMO)', reward: 200, max_per_day: 2, type: 'THƯỜNG', icon: '🔗', api_url: 'https://4mmo.vn/api?api=e60502497c3ce642ca2e4d57515bd294ae0d8d93&url=', method: 'GET', description: 'MMO4', url: DEST_URL, noProxy: true, fallback_url: 'https://4mmo.vn/st?api=e60502497c3ce642ca2e4d57515bd294ae0d8d93&url=' + encodeURIComponent(DEST_URL) },
+  { id: TASK_IDS[6], title: 'Nhiệm vụ 4 (XLink)', reward: 200, max_per_day: 2, type: 'THƯỜNG', icon: '🔗', api_url: 'https://xlink.top/api?api=ac55663f-ef85-4849-8ce1-4ca99bd57ce7&url=', method: 'GET', description: 'XLINK', url: DEST_URL, noProxy: true, fallback_url: 'https://xlink.top/st?api=ac55663f-ef85-4849-8ce1-4ca99bd57ce7&url=' + encodeURIComponent(DEST_URL) },
+  { id: TASK_IDS[8], title: 'Nhiệm vụ 5 (TrafficTot)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🚀', api_url: 'https://services.traffictot.com/api/v1/shorten', method: 'POST', description: 'TRAFFICTOT', url: DEST_URL, apiKey: '8ddd0436120826a3a1afd7cc4275827af4edead951fb5ec5f7dafd03ccdc95f7', noProxy: true, fallback_url: 'https://traffictot.com/' },
+  { id: TASK_IDS[0], title: 'Nhiệm vụ 6 (Link4m)', reward: 200, max_per_day: 2, type: 'THƯỜNG', icon: '🔗', api_url: 'https://link4m.co/api-shorten/v2?api=68208afab6b8fc60542289b6&url=', method: 'GET', description: 'LINK4M', url: DEST_URL, fallback_url: 'https://link4m.co/' },
+  { id: TASK_IDS[1], title: 'Nhiệm vụ 7 (YeuMoney)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🔗', api_url: 'https://yeumoney.com/QL_api.php?token=2103f2aa67d874c161e5f4388b2312af6d43742734a8ea41716b8a2cc94b7b02&format=json&url=', method: 'GET', description: 'YEUMONEY', url: DEST_URL, fallback_url: 'https://yeumoney.com/' },
+  { id: TASK_IDS[5], title: 'Nhiệm vụ 8 (LinkTot)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🔗', api_url: 'https://linktot.net/JSON_QL_API.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=', method: 'GET', description: 'LINKTOT', url: DEST_URL, fallback_url: 'https://linktot.net/' },
+  { id: TASK_IDS[7], title: 'Nhiệm vụ 9 (LinkNgonIO)', reward: 200, max_per_day: 3, type: 'THƯỜNG', icon: '🔗', api_url: 'https://linkngon.io/api?api=5PA5LNPwgcjiVhyRYRhPjam8jGNHpGgELAEPfZH6QzWiBk&url=', method: 'GET', description: 'LINKNGONIO', url: DEST_URL, fallback_url: 'https://linkngon.io/' },
+  { id: TASK_IDS[9], title: 'Nhiệm vụ 10 (Yeulink)', reward: 200, max_per_day: 4, type: 'THƯỜNG', icon: '🔗', api_url: 'https://yeulink.com/api?token=a7b730f5-4fff-4b47-8ae2-c05afb3754a3&url=', method: 'GET', description: 'YEULINK', url: DEST_URL, fallback_url: 'https://yeulink.com/' },
 ];
 
 const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
@@ -89,7 +94,7 @@ const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
     return null;
   };
 
-  const startTask = async (task: Task) => {
+  const startTask = async (task: TaskConfig) => {
     if (isProcessing) return;
     setIsProcessing(task.id);
     
@@ -122,62 +127,82 @@ const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
 
       let shortUrl = "";
 
-      if (task.method === 'POST') {
-        const response = await fetch(task.api_url!, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ api_key: task.apiKey || "", url: DEST_URL })
-        });
-        
-        if (response.status === 401) throw new Error("Tài khoản API chưa được xác thực (401). Vui lòng báo Admin.");
-        if (!response.ok) throw new Error(`Nhà cung cấp trả về lỗi: ${response.status}`);
-        
-        const json = await response.json();
-        shortUrl = findShortLink(json) || "";
-      } else if (task.api_url) {
-        let apiUrlWithDest = task.api_url;
-        if (!apiUrlWithDest.includes('url=') && !apiUrlWithDest.includes('link=')) {
-          const sep = apiUrlWithDest.includes('?') ? '&' : '?';
-          apiUrlWithDest += `${sep}url=`;
-        }
-        const finalApiUrl = apiUrlWithDest.endsWith('=') ? apiUrlWithDest + encodeURIComponent(DEST_URL) : apiUrlWithDest;
-        const proxyCallUrl = PROXY + encodeURIComponent(finalApiUrl);
-        const response = await fetch(proxyCallUrl);
-        
-        if (!response.ok) throw new Error(`Lỗi kết nối Proxy (${response.status})`);
-        
-        const proxyData = await response.json();
-        const rawContent = proxyData.contents ? proxyData.contents.trim() : "";
-        if (!rawContent) throw new Error("Máy chủ nhà cung cấp không phản hồi.");
-        if (rawContent.toLowerCase().startsWith('<!doctype html') || rawContent.toLowerCase().startsWith('<html')) {
-           throw new Error("Nhà cung cấp đang bảo trì hoặc gặp sự cố (HTML Error).");
-        }
-        if (rawContent.includes("xác minh danh tính")) {
-           throw new Error("Tài khoản nhà cung cấp này chưa xác minh danh tính. Vui lòng báo Admin.");
-        }
-        if (rawContent.startsWith('{') || rawContent.startsWith('[')) {
+      try {
+        if (task.method === 'POST') {
+          const response = await fetch(task.api_url!, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ api_key: task.apiKey || "", url: DEST_URL })
+          });
+          
+          if (response.status === 401) throw new Error("401");
+          if (!response.ok) throw new Error(`Status ${response.status}`);
+          
+          const json = await response.json();
+          shortUrl = findShortLink(json) || "";
+        } else if (task.api_url) {
+          let apiUrlWithDest = task.api_url;
+          if (!apiUrlWithDest.includes('url=') && !apiUrlWithDest.includes('link=')) {
+            const sep = apiUrlWithDest.includes('?') ? '&' : '?';
+            apiUrlWithDest += `${sep}url=`;
+          }
+          const finalApiUrl = apiUrlWithDest.endsWith('=') ? apiUrlWithDest + encodeURIComponent(DEST_URL) : apiUrlWithDest;
+          
+          let rawContent = "";
+          
+          // Thử gọi trực tiếp nếu có cờ noProxy hoặc thử cả 2 cách
+          if (task.noProxy) {
             try {
+              const directRes = await fetch(finalApiUrl);
+              const directJson = await directRes.json();
+              shortUrl = findShortLink(directJson) || "";
+            } catch (e) {
+              console.warn("Direct fetch failed, falling back to proxy...");
+            }
+          }
+
+          if (!shortUrl) {
+            const proxyCallUrl = PROXY + encodeURIComponent(finalApiUrl);
+            const response = await fetch(proxyCallUrl);
+            if (!response.ok) throw new Error(`Proxy error ${response.status}`);
+            
+            const proxyData = await response.json();
+            rawContent = proxyData.contents ? proxyData.contents.trim() : "";
+            
+            if (rawContent) {
+              if (rawContent.toLowerCase().startsWith('<!doctype html') || rawContent.toLowerCase().startsWith('<html')) {
+                throw new Error("HTML_ERROR");
+              }
+              if (rawContent.includes("xác minh danh tính")) throw new Error("AUTH_REQUIRED");
+
+              if (rawContent.startsWith('{') || rawContent.startsWith('[')) {
                 const apiResponse = JSON.parse(rawContent);
                 shortUrl = findShortLink(apiResponse) || "";
-            } catch (e) {
-                throw new Error("Dữ liệu trả về không đúng định dạng JSON.");
+              } else if (rawContent.startsWith('http')) {
+                shortUrl = rawContent;
+              }
             }
-        } else if (rawContent.startsWith('http')) {
-            shortUrl = rawContent;
-        } else {
-            throw new Error(rawContent.substring(0, 100));
+          }
         }
+      } catch (innerErr: any) {
+        console.error("API Call failed:", innerErr);
+        // Dùng link dự phòng nếu API chính thức lỗi
+        shortUrl = task.fallback_url || "";
       }
 
-      if (shortUrl) {
-        window.open(shortUrl, '_blank');
-        setVerifyingTaskId(task.id);
+      // Nếu sau tất cả vẫn không có shortUrl, dùng link đích hoặc dự phòng
+      const finalUrlToOpen = shortUrl || task.fallback_url || task.url || DEST_URL;
+      
+      if (finalUrlToOpen.includes('blogspot.com') && task.fallback_url) {
+        window.open(task.fallback_url, '_blank');
       } else {
-        window.open(task.url || DEST_URL, '_blank');
-        setVerifyingTaskId(task.id);
+        window.open(finalUrlToOpen, '_blank');
       }
+      
+      setVerifyingTaskId(task.id);
+
     } catch (err: any) {
-      alert(`[MMO SYSTEM] ${err.message || 'Lỗi không xác định'}`);
+      alert(`[MMO ERROR] Hệ thống đang được điều chỉnh. Vui lòng thử lại sau!`);
     } finally {
       setIsProcessing(null);
     }
@@ -212,7 +237,7 @@ const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
     }
   };
 
-  const renderTaskCard = (task: Task) => {
+  const renderTaskCard = (task: TaskConfig) => {
     const done = completedCounts[task.id] || 0;
     const remain = task.max_per_day - done;
     const isFull = remain <= 0;
@@ -300,7 +325,7 @@ const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> MMO ELITE 2025
         </p>
         <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4">
-          Nhiệm Vụ <span className="text-gray-500/50">Đồng Giá 200đ</span>
+          Nhiệm Vụ <span className="text-gray-500/50">Vượt Link Kiếm Tiền</span>
         </h1>
       </div>
 
@@ -312,9 +337,10 @@ const TasksPage: React.FC<TasksPageProps> = ({ profile, refreshProfile }) => {
          <div className="flex items-start gap-8">
             <span className="text-4xl">⚠️</span>
             <div className="space-y-2">
-              <p className="text-red-500 text-sm font-black uppercase tracking-widest">CẢNH BÁO GIAN LẬN</p>
+              <p className="text-red-500 text-sm font-black uppercase tracking-widest">LƯU Ý QUAN TRỌNG</p>
               <p className="text-red-500/80 text-[10px] font-bold leading-relaxed uppercase tracking-wider">
-                HỆ THỐNG SẼ TỰ ĐỘNG KHÓA ID VĨNH VIỄN NẾU PHÁT HIỆN SỬ DỤNG VPN/PROXY. MÃ XÁC NHẬN CHỈ CÓ HIỆU LỰC TRONG PHIÊN LÀM VIỆC HIỆN TẠI.
+                TUYỆT ĐỐI KHÔNG DÙNG VPN/PROXY. HỆ THỐNG SẼ KHÓA ID VĨNH VIỄN NẾU PHÁT HIỆN GIAN LẬN ĐỊA CHỈ IP. 
+                NẾU NHÀ CUNG CẤP LỖI, HỆ THỐNG SẼ TỰ ĐỘNG CHUYỂN HƯỚNG SANG LINK DỰ PHÒNG.
               </p>
             </div>
          </div>
