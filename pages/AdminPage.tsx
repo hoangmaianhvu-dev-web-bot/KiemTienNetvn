@@ -20,10 +20,11 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
     title: '',
     reward: 200,
     max_per_day: 3,
-    description: '',
+    description: 'ĐẶC BIỆT',
     api_url: '',
-    icon: '🔗',
-    method: 'GET'
+    icon: '💎',
+    method: 'GET',
+    type: 'ĐẶC BIỆT'
   });
 
   const [systemStats, setSystemStats] = useState({
@@ -78,8 +79,8 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
     try {
       const { error } = await supabase.from('tasks').insert([newTask]);
       if (error) throw error;
-      alert("Đã thêm nhiệm vụ mới thành công!");
-      setNewTask({ title: '', reward: 200, max_per_day: 3, description: '', api_url: '', icon: '🔗', method: 'GET' });
+      alert("Đã thêm nhiệm vụ đặc biệt thành công!");
+      setNewTask({ title: '', reward: 200, max_per_day: 3, description: 'ĐẶC BIỆT', api_url: '', icon: '💎', method: 'GET', type: 'ĐẶC BIỆT' });
       fetchData();
     } catch (err: any) { alert("Lỗi: " + err.message); }
   };
@@ -93,7 +94,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
   };
 
   const handleUpdateBalance = async (userId: string, currentBalance: number) => {
-    const amount = prompt(`Nhập số dư mới (Hiện tại: ${currentBalance.toLocaleString()}đ):`, currentBalance.toString());
+    const amount = prompt(`Nhập số dư mới cho user (Hiện tại: ${currentBalance.toLocaleString()}đ):`, currentBalance.toString());
     if (amount === null || isNaN(Number(amount))) return;
     await supabase.from('profiles').update({ balance: Number(amount) }).eq('id', userId);
     fetchData();
@@ -101,7 +102,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
   };
 
   const handleActionWithdrawal = async (id: string, status: 'completed' | 'rejected') => {
-    if (!window.confirm(`Xác nhận thao tác?`)) return;
+    if (!window.confirm(`Xác nhận thao tác này?`)) return;
     await supabase.from('withdrawals').update({ status }).eq('id', id);
     fetchData();
     fetchSystemStats();
@@ -117,7 +118,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-12">
         <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2">🛡️ HỆ THỐNG QUẢN TRỊ ADMIN</p>
-        <h1 className="text-4xl font-black text-white tracking-tighter">Trang <span className="text-gray-500">Điều Hành</span></h1>
+        <h1 className="text-4xl font-black text-white tracking-tighter">Bảng <span className="text-gray-500">Điều Khiển</span></h1>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
@@ -137,7 +138,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
 
       <div className="bg-[#151a24] p-2 rounded-[24px] border border-gray-800 flex shadow-2xl overflow-x-auto mb-8 no-scrollbar">
         {[
-          { id: 'withdrawals', label: 'Lệnh rút tiền' },
+          { id: 'withdrawals', label: 'Rút tiền' },
           { id: 'members', label: 'Thành viên' },
           { id: 'tasks', label: 'Quản lý Nhiệm vụ' }
         ].map((tab) => (
@@ -156,79 +157,127 @@ const AdminPage: React.FC<AdminPageProps> = ({ profile }) => {
       <div className="bg-[#151a24] rounded-[38px] border border-gray-800 shadow-2xl overflow-hidden min-h-[600px]">
         {activeTab === 'tasks' && (
           <div className="p-10">
-            <h3 className="text-white font-black text-xl uppercase mb-8">Thêm nhiệm vụ mới</h3>
-            <form onSubmit={handleAddTask} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 bg-gray-900/50 p-10 rounded-[32px] border border-gray-800">
-               <input placeholder="Tiêu đề nhiệm vụ" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} className="bg-gray-800 border-none rounded-xl p-4 text-white text-sm" required />
-               <input placeholder="Số tiền thưởng (đ)" type="number" value={newTask.reward} onChange={e => setNewTask({...newTask, reward: Number(e.target.value)})} className="bg-gray-800 border-none rounded-xl p-4 text-white text-sm" required />
-               <input placeholder="Giới hạn lượt/ngày" type="number" value={newTask.max_per_day} onChange={e => setNewTask({...newTask, max_per_day: Number(e.target.value)})} className="bg-gray-800 border-none rounded-xl p-4 text-white text-sm" required />
-               <input placeholder="Mô tả ngắn (VD: LINK4M)" value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})} className="bg-gray-800 border-none rounded-xl p-4 text-white text-sm" required />
-               <input placeholder="API URL" value={newTask.api_url} onChange={e => setNewTask({...newTask, api_url: e.target.value})} className="bg-gray-800 border-none rounded-xl p-4 text-white text-sm md:col-span-2" />
-               <button type="submit" className="bg-blue-600 text-white font-black py-4 rounded-xl uppercase tracking-widest text-[10px] md:col-span-2 hover:bg-blue-700">Tạo nhiệm vụ ngay</button>
+            <h3 className="text-white font-black text-xl uppercase mb-8 flex items-center gap-3">
+               <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+               Thêm nhiệm vụ đặc biệt
+            </h3>
+            <form onSubmit={handleAddTask} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 bg-gray-900/50 p-10 rounded-[32px] border border-gray-800 shadow-inner">
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">Tiêu đề nhiệm vụ</label>
+                 <input placeholder="VD: Nhiệm vụ VIP 01" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} className="w-full bg-gray-800 border-none rounded-xl p-5 text-white text-sm outline-none focus:ring-1 focus:ring-blue-500" required />
+               </div>
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">Tiền thưởng (đ)</label>
+                 <input placeholder="200" type="number" value={newTask.reward} onChange={e => setNewTask({...newTask, reward: Number(e.target.value)})} className="w-full bg-gray-800 border-none rounded-xl p-5 text-white text-sm outline-none focus:ring-1 focus:ring-blue-500" required />
+               </div>
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">Giới hạn lượt/ngày</label>
+                 <input placeholder="3" type="number" value={newTask.max_per_day} onChange={e => setNewTask({...newTask, max_per_day: Number(e.target.value)})} className="w-full bg-gray-800 border-none rounded-xl p-5 text-white text-sm outline-none focus:ring-1 focus:ring-blue-500" required />
+               </div>
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">Mô tả nhãn (VD: VIP)</label>
+                 <input placeholder="ĐẶC BIỆT" value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})} className="w-full bg-gray-800 border-none rounded-xl p-5 text-white text-sm outline-none focus:ring-1 focus:ring-blue-500" required />
+               </div>
+               <div className="space-y-2 md:col-span-2">
+                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">API URL rút gọn</label>
+                 <input placeholder="https://api.domain.com/shorten?api=YOUR_KEY&url=" value={newTask.api_url} onChange={e => setNewTask({...newTask, api_url: e.target.value})} className="w-full bg-gray-800 border-none rounded-xl p-5 text-white text-sm outline-none focus:ring-1 focus:ring-blue-500 md:col-span-2" />
+               </div>
+               <button type="submit" className="bg-blue-600 text-white font-black py-5 rounded-2xl uppercase tracking-widest text-[11px] md:col-span-2 hover:bg-blue-700 shadow-xl shadow-blue-900/20 transition-all">Tạo nhiệm vụ ngay</button>
             </form>
 
-            <h3 className="text-white font-black text-xl uppercase mb-8">Nhiệm vụ đang hoạt động</h3>
+            <h3 className="text-white font-black text-xl uppercase mb-8 flex items-center gap-3">
+               <span className="w-1.5 h-6 bg-green-500 rounded-full"></span>
+               Nhiệm vụ đang hoạt động
+            </h3>
             <div className="space-y-4">
               {tasks.map(t => (
-                <div key={t.id} className="flex items-center justify-between p-6 bg-[#0b0e14] border border-gray-800 rounded-2xl">
-                   <div>
-                      <p className="text-white font-bold">{t.title}</p>
-                      <p className="text-gray-500 text-[10px] uppercase tracking-widest">{t.reward}đ • {t.max_per_day} lượt/ngày</p>
+                <div key={t.id} className="flex items-center justify-between p-8 bg-[#0b0e14] border border-gray-800 rounded-3xl group hover:border-gray-700 transition-all">
+                   <div className="flex items-center gap-6">
+                      <div className="w-12 h-12 bg-gray-800/50 rounded-xl flex items-center justify-center text-xl">
+                        {t.icon || '💎'}
+                      </div>
+                      <div>
+                        <p className="text-white font-bold">{t.title}</p>
+                        <p className="text-gray-500 text-[10px] uppercase tracking-widest mt-1">THƯỞNG: {t.reward}đ • LƯỢT: {t.max_per_day}/ngày</p>
+                      </div>
                    </div>
-                   <button onClick={() => handleDeleteTask(t.id)} className="text-red-500 font-black text-[10px] uppercase border border-red-500/20 px-4 py-2 rounded-lg hover:bg-red-500/10">Xóa</button>
+                   <button onClick={() => handleDeleteTask(t.id)} className="text-red-500 font-black text-[10px] uppercase border border-red-500/20 px-6 py-3 rounded-xl hover:bg-red-500/10 transition-all">Xóa</button>
                 </div>
               ))}
+              {tasks.length === 0 && (
+                <div className="text-center py-20 bg-gray-900/20 rounded-[32px] border border-gray-800 border-dashed">
+                  <p className="text-gray-600 font-black text-[10px] uppercase tracking-widest">Không có nhiệm vụ đặc biệt nào</p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {activeTab === 'members' && (
           <div className="p-10">
-            <div className="mb-10 flex justify-between items-center">
+            <div className="mb-10 flex flex-col md:flex-row justify-between items-center gap-6">
               <h3 className="text-white font-black text-xl uppercase">Thành viên hệ thống</h3>
-              <input placeholder="Tìm tên hoặc mã ref..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="bg-gray-900 border border-gray-800 rounded-xl px-6 py-3 text-xs text-white" />
+              <input placeholder="Tìm theo tên hoặc mã ref..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full md:w-80 bg-gray-900 border border-gray-800 rounded-2xl px-8 py-4 text-xs text-white focus:border-blue-500 outline-none transition-all" />
             </div>
-            <table className="w-full text-left">
-              <thead className="text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-800">
-                <tr><th className="px-6 py-6">Thành viên</th><th className="px-6 py-6">Số dư</th><th className="px-6 py-6 text-right">Thao tác</th></tr>
-              </thead>
-              <tbody>
-                {filteredMembers.map(m => (
-                  <tr key={m.id} className="border-b border-gray-800/30">
-                    <td className="px-6 py-6"><p className="text-white font-bold">{m.full_name}</p><p className="text-gray-500 text-[10px]">{m.email} • Ref: {m.referral_code}</p></td>
-                    <td className="px-6 py-6 text-green-500 font-black">{m.balance.toLocaleString()}đ</td>
-                    <td className="px-6 py-6 text-right"><button onClick={() => handleUpdateBalance(m.id, m.balance)} className="text-blue-500 font-black text-[10px] uppercase tracking-widest">Sửa số dư</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-800">
+                  <tr><th className="px-8 py-6">Thành viên</th><th className="px-8 py-6 text-center">Số dư</th><th className="px-8 py-6 text-right">Thao tác</th></tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800/30">
+                  {filteredMembers.map(m => (
+                    <tr key={m.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-8 py-8"><p className="text-white font-bold">{m.full_name}</p><p className="text-gray-500 text-[10px] mt-1">{m.email} • Ref: {m.referral_code}</p></td>
+                      <td className="px-8 py-8 text-center text-green-500 font-black text-lg">{m.balance.toLocaleString()}đ</td>
+                      <td className="px-8 py-8 text-right"><button onClick={() => handleUpdateBalance(m.id, m.balance)} className="bg-blue-600/10 text-blue-500 border border-blue-500/20 px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">Sửa số dư</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {activeTab === 'withdrawals' && (
           <div className="p-10">
-            <h3 className="text-white font-black text-xl uppercase mb-10">Lệnh rút tiền</h3>
-            <table className="w-full text-left">
-              <thead className="text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-800">
-                <tr><th>Người rút</th><th>Số tiền</th><th>Thông tin</th><th>Thao tác</th></tr>
-              </thead>
-              <tbody>
-                {withdrawals.map(w => (
-                  <tr key={w.id} className="border-b border-gray-800/30">
-                    <td className="py-6"><p className="text-white font-bold">{w.profiles?.full_name}</p></td>
-                    <td className="text-blue-500 font-black">{w.amount.toLocaleString()}đ</td>
-                    <td className="text-gray-500 text-[10px] uppercase">{w.method} • {w.account_number}</td>
-                    <td>
-                      {w.status === 'pending' && (
-                        <div className="flex gap-2">
-                          <button onClick={() => handleActionWithdrawal(w.id, 'completed')} className="text-green-500 font-black text-[9px] uppercase border border-green-500/20 px-3 py-1 rounded">Duyệt</button>
-                          <button onClick={() => handleActionWithdrawal(w.id, 'rejected')} className="text-red-500 font-black text-[9px] uppercase border border-red-500/20 px-3 py-1 rounded">Hủy</button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <h3 className="text-white font-black text-xl uppercase mb-10">Lệnh rút tiền mới nhất</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-800">
+                  <tr><th className="px-8 py-6">Người rút</th><th className="px-8 py-6">Số tiền</th><th className="px-8 py-6">Thông tin</th><th className="px-8 py-6 text-right">Thao tác</th></tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800/30">
+                  {withdrawals.map(w => (
+                    <tr key={w.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-8 py-8">
+                        <p className="text-white font-bold">{w.profiles?.full_name}</p>
+                        <p className="text-gray-500 text-[10px] mt-1">{w.profiles?.email}</p>
+                      </td>
+                      <td className="px-8 py-8 text-blue-500 font-black text-xl">{w.amount.toLocaleString()}đ</td>
+                      <td className="px-8 py-8 text-gray-400 text-[11px] font-bold uppercase tracking-widest">
+                        {w.method} <br />
+                        <span className="text-gray-600 font-mono text-[10px] normal-case">{w.account_number}</span>
+                      </td>
+                      <td className="px-8 py-8 text-right">
+                        {w.status === 'pending' ? (
+                          <div className="flex gap-2 justify-end">
+                            <button onClick={() => handleActionWithdrawal(w.id, 'completed')} className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Duyệt</button>
+                            <button onClick={() => handleActionWithdrawal(w.id, 'rejected')} className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Hủy</button>
+                          </div>
+                        ) : (
+                          <span className={`text-[8px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest ${w.status === 'completed' ? 'text-green-500 bg-green-500/10' : 'text-red-500 bg-red-500/10'}`}>
+                            {w.status === 'completed' ? 'Thành công' : 'Bị từ chối'}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {withdrawals.length === 0 && (
+                    <tr><td colSpan={4} className="py-20 text-center text-gray-600 text-[10px] font-black uppercase tracking-widest">Không có dữ liệu rút tiền</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
