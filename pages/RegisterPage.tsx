@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase';
 
 const RegisterPage: React.FC = () => {
@@ -9,38 +10,39 @@ const RegisterPage: React.FC = () => {
   const [referrerCode, setReferrerCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showCaptchaGuide, setShowCaptchaGuide] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    if (ref) setReferrerCode(ref);
+  }, [location]);
+
+  const generateUniqueRefCode = () => {
+    // Tạo chuỗi 6 số ngẫu nhiên lộn xộn
+    return Math.floor(100000 + Math.random() * 899999).toString();
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     setLoading(true);
     setError(null);
-    setShowCaptchaGuide(false);
     
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            full_name: fullName
-          }
+          data: { full_name: fullName }
         }
       });
       
-      if (authError) {
-        if (authError.message.toLowerCase().includes('captcha')) {
-          setShowCaptchaGuide(true);
-          throw new Error("Lỗi xác minh bảo mật (Captcha)");
-        }
-        throw authError;
-      }
+      if (authError) throw authError;
 
       if (authData.user) {
-        // Tạo mã giới thiệu ngẫu nhiên gồm 6 chữ số (100000 - 999999)
-        const myReferralCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const myReferralCode = generateUniqueRefCode();
         const role = email.toLowerCase() === 'nthd@gmail.com' ? 'admin' : 'user';
         
         const { error: profileError } = await supabase
@@ -59,17 +61,13 @@ const RegisterPage: React.FC = () => {
             }
           ]);
 
-        if (profileError) {
-          console.error('Profile update failed:', profileError.message);
-          throw new Error("Không thể tạo hồ sơ người dùng: " + profileError.message);
-        }
+        if (profileError) throw profileError;
         
-        alert("Đăng ký thành công! Đang chuyển hướng...");
-        await new Promise(resolve => setTimeout(resolve, 800));
+        alert("Đăng ký thành công! Hãy bắt đầu kiếm tiền ngay.");
         navigate('/dashboard');
       }
     } catch (err: any) {
-      setError(err.message || 'Hệ thống đang bận.');
+      setError(err.message || 'Lỗi hệ thống đăng ký.');
     } finally {
       setLoading(false);
     }
@@ -92,10 +90,6 @@ const RegisterPage: React.FC = () => {
             </div>
             <span className="text-white font-bold text-xl tracking-tight">KiemTienNet</span>
           </Link>
-          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors w-fit">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-            Quay lại trang chủ
-          </button>
         </div>
 
         <div className="relative z-10">
@@ -110,11 +104,6 @@ const RegisterPage: React.FC = () => {
 
       <div className="w-full md:w-1/2 flex flex-col p-8 md:p-20 justify-center">
         <div className="max-w-md w-full mx-auto">
-          <button onClick={() => navigate('/')} className="md:hidden flex items-center gap-2 text-gray-500 hover:text-white text-[10px] font-black uppercase tracking-widest mb-8 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-            Quay lại trang chủ
-          </button>
-
           <h2 className="text-4xl font-black text-white mb-2 tracking-tight">Đăng ký mới</h2>
           <p className="text-gray-500 mb-10 text-sm font-medium">Trở thành một phần của mạng lưới MMO chuyên nghiệp.</p>
           
@@ -122,7 +111,7 @@ const RegisterPage: React.FC = () => {
             <div className="space-y-4">
                <div>
                   <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Họ và tên</label>
-                  <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nhập tên thật để nhận tiền" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
+                  <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Tên thật để nhận tiền" className="w-full bg-[#151a24] border border-gray-800 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-blue-500 transition-all placeholder-gray-700" />
                </div>
                <div>
                   <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Email</label>
@@ -138,20 +127,14 @@ const RegisterPage: React.FC = () => {
                </div>
             </div>
             
-            {error && (
-              <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl">
-                <p className="text-red-500 text-[11px] font-black uppercase tracking-wider mb-2">{error}</p>
-              </div>
-            )}
+            {error && <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-black uppercase">{error}</div>}
             
             <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-900/20 transition-all disabled:opacity-50 flex items-center justify-center gap-3">
-              {loading ? (
-                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              ) : 'ĐĂNG KÝ THÀNH VIÊN'}
+              {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'ĐĂNG KÝ THÀNH VIÊN'}
             </button>
           </form>
           <p className="mt-8 text-center text-gray-500 text-sm">
-            Đã có tài khoản? <Link to="/login" className="text-blue-500 font-bold hover:underline">Đăng nhập ngay</Link>
+            Đã có tài khoản? <Link to="/login" className="text-blue-500 font-bold hover:underline">Đăng nhập</Link>
           </p>
         </div>
       </div>
